@@ -1,7 +1,7 @@
 import numpy as np
 import pylab as pp
 
-def rejection( N, params ):
+def abc_rejection( N, params ):
   # required functions
   obs_stats        = params["obs_stats"]
   rand_func        = params["rand_func"]
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     return 3*np.random.randn()
     
   def sim_func( x ):
-    return x + np.random.randn(100)
+    return x + np.random.randn(3)
     
   def stats_func( outputs ):
     return np.mean(outputs)
@@ -102,7 +102,7 @@ if __name__ == "__main__":
   def discrepancy_func( x_stats, obs_stats ):
     return np.abs( x_stats - obs_stats )
   
-  N = 1000
+  N = 10000
   epsilon = 1.1
   x_star = 2.0
   x_star_outs = sim_func( x_star )
@@ -120,26 +120,39 @@ if __name__ == "__main__":
   params["keep_outputs"]     = True
   params["keep_rejections"]  = True
   
-  X, results = rejection( N, params )
+  X, results = abc_rejection( N, params )
   
   pp.figure(1)
   pp.clf()
-  pp.subplot(2,1,1)
-  pp.plot( results["REJECT_X"], results["REJECT_S"], 'ro', alpha = 0.5 )
+  pp.subplot(2,2,1)
+  pp.plot( results["REJECT_X"], results["REJECT_S"], 'ro', alpha = 0.25 )
   pp.plot( results["X"], results["STATS"], 'go', alpha = 0.85 )
   ax = pp.axis()
-  pp.vlines( [x_star], ax[2], ax[3], color = "k")
+  pp.vlines( [x_star], ax[2], ax[3], color = "k", linewidths=3)
+  pp.hlines( x_star_stats, ax[2], ax[3], color = "k", linewidths=3)
   pp.fill_between( np.linspace(ax[0], ax[1],10), x_star_stats-epsilon, x_star_stats+epsilon, color="g", alpha=0.5 )
-  #pp.hlines( x_star_stats, ax[0], ax[1], color = "g")
-  #pp.hlines( x_star_stats-epsilon, ax[0], ax[1], color = "g")
-  #pp.hlines( x_star_stats+epsilon, ax[0], ax[1], color = "g")
+  pp.ylabel( "discrepancy")
+  pp.xlabel( "theta")
   pp.axis(ax)
 
-  pp.subplot(2,1,2)
-  pp.hist( X, 20, normed=True, alpha=0.5, color="g" )
+  pp.subplot(2,2,3)
+  pp.hist( X, 10, normed=True, alpha=0.5, color="g" )
   ax2 = pp.axis()
-  pp.vlines( [x_star], ax[2], ax[3], color = "k")
+  pp.vlines( [x_star], ax[2], ax[3], color = "k", linewidths=3)
   pp.axis( [ax[0],ax[1],ax2[2],ax2[3]] )
+
+  pp.ylabel( "P(theta)")
+  pp.xlabel( "theta")
+  
+  pp.subplot(2,2,2)
+  pp.hist( results["STATS"], 10, normed=True, alpha=0.5, color="g", orientation = 'horizontal' )
+  ax2 = pp.axis()
+  pp.hlines( x_star_stats, ax2[2], ax2[3], color = "k", linewidths=3)
+  pp.axis( [ax2[0], ax2[1], ax[2], ax[3]] )
+
+  pp.ylabel( "stats")
+  pp.xlabel( "P(stats)")
+  
   pp.show()
   
   
