@@ -31,8 +31,9 @@ def abc_rejection( N, params ):
   O           = []
   R           = []
   Rstats      = []
-  sim_calls   = 0
-  acceptances = 0
+  nbr_sim_calls   = 0
+  acceptances = []
+  nbr_accepts = 0
   for n in xrange(N):
     
     accepted = False
@@ -43,7 +44,7 @@ def abc_rejection( N, params ):
       x = rand_func()
       
       # simuation -> outputs -> statistics -> discrepancies
-      x_sim_outs = sim_func( x ); sim_calls+=1
+      x_sim_outs = sim_func( x ); nbr_sim_calls+=1
       x_stats    = stats_func( x_sim_outs )
       x_disc     = discrepancy_func( x_stats, obs_stats )
       
@@ -51,7 +52,8 @@ def abc_rejection( N, params ):
       if np.all( x_disc <= epsilon ):
         accepted = True
         X.append(x)
-        acceptances += 1
+        nbr_accepts += 1
+        acceptances.append(1)
         
         if keep_outputs:
           O.append( x_sim_outs )
@@ -60,12 +62,14 @@ def abc_rejection( N, params ):
         if keep_discrepancy:
           D.append( x_disc )
       else:
+        acceptances.append(0)
         if keep_rejections:
           R.append( x )
           Rstats.append( x_stats )
         
   # package results
-  X = np.array(X)        
+  X = np.array(X) 
+  acceptances = np.array(acceptances)       
   if keep_outputs:
     O = np.array(O)
   if keep_stats:
@@ -76,15 +80,16 @@ def abc_rejection( N, params ):
     R = np.array(R)
     Rstats = np.array(Rstats)
   outputs = { \
-               "sim_calls"   : sim_calls, \
-               "acceptances" : acceptances, \
-               "accept_rate" : float(acceptances)/float(sim_calls), \
-               "X"           : X, \
-               "RHO"         : D, \
-               "STATS"       : S, \
-               "OUTS"        : O, \
-               "REJECT_X"     : R, \
-               "REJECT_S"     : Rstats, \
+               "nbr_sim_calls" : nbr_sim_calls, \
+               "nbr_accepts"   : nbr_accepts, \
+               "accept_rate"   : float(nbr_accepts)/float(nbr_sim_calls), \
+               "acceptances"   : acceptances, \
+               "X"             : X, \
+               "RHO"           : D, \
+               "STATS"         : S, \
+               "OUTS"          : O, \
+               "REJECT_X"      : R, \
+               "REJECT_S"      : Rstats, \
             }
             
   return X, outputs
