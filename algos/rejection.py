@@ -1,98 +1,50 @@
 import numpy as np
 import pylab as pp
 
-def abc_rejection( N, params ):
+def abc_rejection( nbr_samples, epsilon, state, StateClass, all_states = None, verbose = True ):
   # required functions
-  obs_stats        = params["obs_stats"]
-  rand_func        = params["rand_func"]
-  sim_func         = params["sim_func"]
-  stats_func       = params["stats_func"]
-  discrepancy_func = params["discrepancy_func"]
-  epsilon          = params["epsilon"]
-  
-  # extra results to keep
-  keep_discrepancy = False
-  keep_stats       = False
-  keep_outputs     = False
-  
-  if params.has_key( "keep_discrepancy"):
-    keep_discrepancy = params["keep_discrepancy"]
-  if params.has_key( "keep_stats"):
-    keep_stats = params["keep_stats"]
-  if params.has_key( "keep_outputs"):
-    keep_outputs = params["keep_outputs"]
-  if params.has_key( "keep_rejections"):
-    keep_rejections = params["keep_rejections"]
+
     
   # init states
-  X           = []
-  D           = []
-  S           = []
-  O           = []
-  R           = []
-  Rstats      = []
-  nbr_sim_calls   = 0
+  thetas           = []
+  nbr_sim_calls    = 0
   acceptances = []
   nbr_accepts = 0
-  for n in xrange(N):
-    
+  for n in xrange(nbr_samples):
+    if verbose:
+      print "n = %8d of %d"%(n,nbr_samples)
     accepted = False
     
     # repeat until accepted
     while accepted is False:
       # sample parameter setting from (prior) function
-      x = rand_func()
+      theta = state.theta_prior_rand()
       
       # simuation -> outputs -> statistics -> discrepancies
-      x_sim_outs = sim_func( x ); nbr_sim_calls+=1
-      x_stats    = stats_func( x_sim_outs )
-      x_disc     = discrepancy_func( x_stats, obs_stats )
+      theta_state    = StateClass( theta, state.params )
+      theta_disc     = theta_state.discrepancy()
+      
+      #if verbose:
+      #  print "    theta = %3.3f   stats = %3.3f  disc = %3.3f"%(theta, theta_state.get_statistics(), theta_disc )
       
       # all discrepancies much be less than all epsilons
-      if np.all( x_disc <= epsilon ):
+      if np.all( theta_disc <= epsilon ):
         accepted = True
-        X.append(x)
+        thetas.append(theta)
         nbr_accepts += 1
         acceptances.append(1)
-        
-        if keep_outputs:
-          O.append( x_sim_outs )
-        if keep_stats:
-          S.append( x_stats )
-        if keep_discrepancy:
-          D.append( x_disc )
-      else:
-        acceptances.append(0)
-        if keep_rejections:
-          R.append( x )
-          Rstats.append( x_stats )
-        
+      
+      if all_states is not None:  
+        all_states.add( theta_state, accepted )
+  #print "here"      
   # package results
-  X = np.array(X) 
-  acceptances = np.array(acceptances)       
-  if keep_outputs:
-    O = np.array(O)
-  if keep_stats:
-    S = np.array(S)
-  if keep_discrepancy:
-    D = np.array(D)
-  if keep_rejections:
-    R = np.array(R)
-    Rstats = np.array(Rstats)
-  outputs = { \
-               "nbr_sim_calls" : nbr_sim_calls, \
-               "nbr_accepts"   : nbr_accepts, \
-               "accept_rate"   : float(nbr_accepts)/float(nbr_sim_calls), \
-               "acceptances"   : acceptances, \
-               "X"             : X, \
-               "RHO"           : D, \
-               "STATS"         : S, \
-               "OUTS"          : O, \
-               "REJECT_X"      : R, \
-               "REJECT_S"      : Rstats, \
-            }
-            
-  return X, outputs
+  #print thetas
+  thetas = np.array(thetas) 
+  print thetas
+  #print "here" 
+  acceptances = np.array(acceptances)   
+  #print "here"         
+  return thetas
   
 if __name__ == "__main__":
   def rand_func():

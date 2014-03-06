@@ -7,9 +7,9 @@
 #
 # =========================================================================== #
 class BaseState( object ):
-  def __init__( self, x, params ):
+  def __init__( self, theta, params ):
     self.nbr_sim_calls = 0
-    self.x             = x
+    self.theta         = theta
     self.params        = params
     
     self.load_params( self.params )
@@ -17,17 +17,17 @@ class BaseState( object ):
   def load_params( self, params ):
     raise NotImplementedError
     
-  def loglikelihood( self, x = None ):
+  def loglikelihood( self, theta = None ):
     raise NotImplementedError
     
-  def logprior( self, x = None ):
+  def logprior( self, theta = None ):
     raise NotImplementedError
     
-  def logproposal( self, q, x ):
+  def logproposal( self, q, theta ):
     # from x to q logproposal
     raise NotImplementedError
   
-  def discrepancy( self, x = None, obs = None ):
+  def discrepancy( self, theta = None, obs = None ):
     # from x to q logproposal
     raise NotImplementedError
       

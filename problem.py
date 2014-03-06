@@ -6,10 +6,13 @@
 #
 # =========================================================================== #
 class BaseProblem( object ):
-  def __init__(self, params ):
+  def __init__(self, params, force_init = False ):
     self.params = params
     self.load_params( params )
     self.initialized = False
+    
+    if force_init is True:
+      self.initialize()
   
   # extract info about specific for this problem
   def load_params( self, params ):
