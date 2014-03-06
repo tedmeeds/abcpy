@@ -1,4 +1,5 @@
 from abcpy.problem import BaseProblem
+from abcpy.plotting import *
 import numpy as np
 import scipy as sp
 import pylab as pp
@@ -57,5 +58,23 @@ class ExponentialProblem( BaseProblem ):
     return 1
       
   # take samples/staistics etc and "view" this particular problem
-  def view_results( self, states_object ):
-    raise NotImplementedError
+  def view_results( self, states_object, burnin = 0 ):
+    nbins = 20
+    alpha = 0.5
+    label_size = 8
+    linewidth = 3
+    linecolor = "r"
+    thetas = states_object.get_thetas()[burnin:,:]
+    stats  = states_object.get_states()[burnin:,:]
+    
+    # plot sample distribution of thetas, add vertical line for true theta, theta_star
+    f = pp.figure()
+    sp = f.add_subplot(111)
+    pp.hist( self.thetas, nbins, normed = True, alpha = alpha )
+    ax = pp.axis()
+    pp.hlines( self.theta_star, ax[2], ax[3], color=linecolor, linewidths=linewidth )
+    pp.xlabel( "theta" )
+    pp.ylabel( "P(theta)" )
+    set_label_fonsize( sp, label_size )
+    
+    return f
