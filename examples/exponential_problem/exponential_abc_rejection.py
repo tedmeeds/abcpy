@@ -25,8 +25,8 @@ state_params["simulation_function"]   = problem.simulation_function
 state_params["statistics_function"]   = problem.statistics_function
 # state_params["epsilon"]               = epsilon
 
-nbr_samples = 10000
-epsilon     = 5.2
+nbr_samples = 1000
+epsilon     = 0.5
 theta0 = problem.theta_prior_rand()
 state  = State( theta0, state_params )
 all_states = AllStates()

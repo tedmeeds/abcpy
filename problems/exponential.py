@@ -1,8 +1,11 @@
 from abcpy.problem import BaseProblem
 from abcpy.plotting import *
+from abcpy.helpers import *
 import numpy as np
 import scipy as sp
 import pylab as pp
+
+import pdb
 
 class ExponentialProblem( BaseProblem ):
   # extract info about specific for this problem
@@ -34,7 +37,28 @@ class ExponentialProblem( BaseProblem ):
     self.observations   = self.simulation_function( self.theta_star )
     self.obs_statistics = self.statistics_function( self.observations )
     
-    self.posterior_mode = (self.observations.sum() + self.alpha)/(self.N + self.alpha + self.beta)
+    self.min_range = 0.05
+    self.max_range = 0.15
+    self.range = (self.min_range,self.max_range)
+    self.fine_bin_width      = 0.0001
+    self.coarse_bin_width    = 0.001
+    
+    self.fine_theta_range    = np.arange( self.min_range, self.max_range+self.fine_bin_width, self.fine_bin_width )
+    self.coarse_theta_range  = np.arange( self.min_range, self.max_range+self.coarse_bin_width, self.coarse_bin_width )
+    
+    self.nbins_coarse   = len(self.coarse_theta_range)
+    self.nbins_fine     = len(self.fine_theta_range)
+    self.log_posterior  = gamma_logprob( self.fine_theta_range, self.alpha+self.N, self.beta+self.observations.sum() )
+    self.posterior      = np.exp(self.log_posterior)
+    self.posterior_mode = (self.N + self.alpha)/(self.observations.sum() + self.beta)
+    
+    self.true_posterior_logpdf_func = gen_gamma_logpdf(self.alpha+self.N,self.beta+self.observations.sum())
+    self.true_posterior_cdf_func = gen_gamma_cdf(self.alpha+self.N,self.beta+self.observations.sum())
+    
+    self.posterior_bars_range = self.coarse_theta_range[:-1] + 0.5*self.coarse_bin_width
+    self.posterior_cdf = self.true_posterior_cdf_func( self.coarse_theta_range )
+    self.posterior_bars = (self.posterior_cdf[1:] - self.posterior_cdf[:-1])/self.coarse_bin_width
+    self.posterior_cdf_bins = self.posterior_cdf[1:] - self.posterior_cdf[:-1]
     # done initialization
     self.initialized = True
     
@@ -78,15 +102,22 @@ class ExponentialProblem( BaseProblem ):
     # plot sample distribution of thetas, add vertical line for true theta, theta_star
     f = pp.figure()
     sp = f.add_subplot(111)
-    pp.hist( thetas, nbins, normed = True, alpha = alpha )
+    pp.plot( self.fine_theta_range, self.posterior, linecolor+"-", lw = 1)
     ax = pp.axis()
+    pp.hist( thetas, self.nbins_coarse, range=self.range,normed = True, alpha = alpha )
+    
+    pp.fill_between( self.fine_theta_range, self.posterior, color="m", alpha=0.5)
+    
+    pp.plot( self.posterior_bars_range, self.posterior_bars, 'ro')
     pp.vlines( thetas.mean(), ax[2], ax[3], color="b", linewidths=linewidth)
     #pp.vlines( self.theta_star, ax[2], ax[3], color=linecolor, linewidths=linewidth )
-    pp.vlines( 1.0/self.posterior_mode, ax[2], ax[3], color="g", linewidths=linewidth )
+    pp.vlines( self.posterior_mode, ax[2], ax[3], color=linecolor, linewidths=linewidth )
+    
     pp.xlabel( "theta" )
     pp.ylabel( "P(theta)" )
-    pp.axis(ax)
+    pp.axis([self.range[0],self.range[1],ax[2],ax[3]])
     set_label_fonsize( sp, label_size )
     
+    print "ERROR  ",bin_errors_1d( self.coarse_theta_range, self.posterior_cdf_bins, thetas )
     # return handle to figure for further manipulation
     return f

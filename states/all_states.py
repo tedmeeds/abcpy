@@ -42,7 +42,13 @@ class BaseAllStates( object ):
         self.statistics.append( state.statistcs)
       self.statistics = np.array(self.statistics)
     return self.statistics
+  
+  def get_sim_calls(self):
+    return np.array( self.sim_calls )
     
+  def get_acceptances(self):
+    return np.array( self.accepted )
+     
   def get_states( self, burnin = 1 ):
     return self.states[burnin:]
        
