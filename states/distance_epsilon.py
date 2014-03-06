@@ -1,4 +1,5 @@
 from abcpy.state import BaseState
+
 import numpy as np
 import scipy as sp
 import pylab as pp
@@ -53,32 +54,3 @@ class DistanceEpsilonState( BaseState ):
   def theta_prior_rand(self):
     return self.theta_prior_rand_func()
     
-class AllDistanceEpsilonStates( object ):
-  def __init__(self):
-    self.thetas          = []
-    self.states          = []
-    self.accepted        = []
-    self.nbr_acceptances = 0
-  
-    self.statistics      = None
-    self.observations    = None
-    
-  def get_thetas( self, burnin = 0 ):
-    return np.array( self.thetas )[burnin:,:]
-  
-  def get_statistics( self, burnin = 1):
-    if self.statistics is None:
-      self.statistics = []
-      for state in self.states:
-        self.statistics.append( state.statistcs)
-      self.statistics = np.array(self.statistics)
-    return self.statistics
-    
-  def get_states( self, burnin = 1 ):
-    return self.states[burnin:]
-       
-  def add( self, state, accepted = True, other_state = None ):
-    self.accepted.append( accepted )
-    if accepted:
-      self.nbr_acceptances += 1
-      self.thetas.append( state.theta )

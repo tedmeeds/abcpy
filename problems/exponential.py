@@ -34,6 +34,7 @@ class ExponentialProblem( BaseProblem ):
     self.observations   = self.simulation_function( self.theta_star )
     self.obs_statistics = self.statistics_function( self.observations )
     
+    self.posterior_mode = (self.observations.sum() + self.alpha)/(self.N + self.alpha + self.beta)
     # done initialization
     self.initialized = True
     
@@ -79,9 +80,12 @@ class ExponentialProblem( BaseProblem ):
     sp = f.add_subplot(111)
     pp.hist( thetas, nbins, normed = True, alpha = alpha )
     ax = pp.axis()
-    pp.vlines( self.theta_star, ax[2], ax[3], color=linecolor, linewidths=linewidth )
+    pp.vlines( thetas.mean(), ax[2], ax[3], color="b", linewidths=linewidth)
+    #pp.vlines( self.theta_star, ax[2], ax[3], color=linecolor, linewidths=linewidth )
+    pp.vlines( 1.0/self.posterior_mode, ax[2], ax[3], color="g", linewidths=linewidth )
     pp.xlabel( "theta" )
     pp.ylabel( "P(theta)" )
+    pp.axis(ax)
     set_label_fonsize( sp, label_size )
     
     # return handle to figure for further manipulation

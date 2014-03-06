@@ -35,15 +35,9 @@ def abc_rejection( nbr_samples, epsilon, state, StateClass, all_states = None, v
         acceptances.append(1)
       
       if all_states is not None:  
-        all_states.add( theta_state, accepted )
-  #print "here"      
-  # package results
-  #print thetas
+        all_states.add( theta_state, theta_state.nbr_sim_calls, accepted )
   thetas = np.array(thetas) 
-  print thetas
-  #print "here" 
   acceptances = np.array(acceptances)   
-  #print "here"         
   return thetas
   
 if __name__ == "__main__":
