@@ -18,7 +18,7 @@ def abc_rejection( nbr_samples, epsilon, state, StateClass, all_states = None, v
     # repeat until accepted
     while accepted is False:
       # sample parameter setting from (prior) function
-      theta = state.theta_prior_rand()
+      theta = state.prior_rand()
       
       # simuation -> outputs -> statistics -> discrepancies
       theta_state    = StateClass( theta, state.params )
@@ -41,6 +41,8 @@ def abc_rejection( nbr_samples, epsilon, state, StateClass, all_states = None, v
   return thetas
   
 if __name__ == "__main__":
+  assert False, "This demo will no longer work, see /examples/ for working demos."
+  
   def rand_func():
     return 3*np.random.randn()
     

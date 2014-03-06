@@ -51,6 +51,6 @@ class DistanceEpsilonState( BaseState ):
   def distance( self, x, y ):
     return np.linalg.norm( x - y )
   
-  def theta_prior_rand(self):
+  def prior_rand(self):
     return self.theta_prior_rand_func()
     

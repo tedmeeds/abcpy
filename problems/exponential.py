@@ -10,15 +10,21 @@ import pdb
 class ExponentialProblem( BaseProblem ):
   # extract info about specific for this problem
   def load_params( self, params ):
-    # Gamma prior parameters
+    # prior parameters (Gamma distribution)
     self.alpha = params["alpha"]
     self.beta  = params["beta"]
+    
+    # proposal params (LogNormal)
+    self.proposal_std    = params["q_stddev"]
+    self.proposal_rand   = lognormal_rand
+    self.proposal_logpdf = lognormal_logpdf
     
     # "true" parameter setting
     self.theta_star = params["theta_star"]
     
     # number of samples per simulation
     self.N = params["N"]
+    
     
     # random seed for observations
     self.seed = None
@@ -85,7 +91,17 @@ class ExponentialProblem( BaseProblem ):
   # theta_rand
   def theta_prior_rand( self, N = 1 ):
     return np.random.gamma( self.alpha, 1.0/self.beta, N ) # 1/beta cause of how python implements
-        
+    
+  # theta_rand
+  def theta_prior_logpdf( self, theta ):
+    return gamma_logprob( theta, self.alpha, self.beta ) # 1/beta cause of how python implements
+      
+  def theta_proposal_rand( self, theta ):
+    return self.proposal_rand( np.log(theta), self.proposal_std )
+    
+  def theta_proposal_logpdf( self, to_theta, from_theta ):
+    return self.proposal_logpdf( to_theta, np.log(from_theta), self.proposal_std )
+      
   # take samples/staistics etc and "view" this particular problem
   def view_results( self, states_object, burnin = 1 ):
     # plotting params

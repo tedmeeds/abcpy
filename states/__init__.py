@@ -1,1 +1,1 @@
-__all__ = ["all_states", "distance_epsilon", "kernel_epsilon_state"]
+__all__ = ["all_states", "distance_epsilon", "kernel_epsilon"]

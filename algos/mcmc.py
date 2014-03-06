@@ -2,53 +2,61 @@ import numpy as np
 import pylab as pp
 
   
-def abc_mcmc( all_states, params ):
-  state = all_states[-1]
-  x     = state.x
+def abc_mcmc( nbr_samples, state, StateClass, all_states = None ):
+  assert state is not None, "need to start with a state"
+  assert StateClass is not None, "need a StateClass"
   
-  NewState     = params["state_class"]
-  state_params = params["state_params"]
+  # init with current state's theta
+  theta          = state.theta
+  theta_loglik   = state.loglikelihood()
+  theta_logprior = state.logprior( theta )
+  loglik         = theta_loglik + theta_logprior
   
   # init states
-  X           = []
-  LL          = []
-  nbr_sim_calls   = 0
-  acceptances = []
-  nbr_accepts = 0
-  for n in xrange(N):
+  thetas          = [theta]
+  LL              = [loglik]
+  nbr_sim_calls   = state.nbr_sim_calls
+  acceptances     = [True]
+  sim_calls       = [state.nbr_sim_calls]
+  nbr_accepts     = 1
+  for n in xrange(nbr_samples):
+    this_iters_sim_calls = 0
     
     # sample q from a proposal distribution
-    q = q_func( x )
+    q_theta = state.proposal_rand( theta )
     
     # create new state for proposal q
-    q_state    = NewState( q, state_params )
+    q_state    = StateClass( q_theta, state.params )
     
     # simulation -> outputs -> statistics -> loglikelihood 
     q_loglik   = q_state.loglikelihood()
     
     # prior log-density
-    q_logprior = q_state.logprior( q )
+    q_logprior = q_state.logprior( q_theta )
     
     # keep track of all sim calls
-    nbr_sim_calls += q_state.nbr_sim_calls
+    this_iters_sim_calls += q_state.nbr_sim_calls
     
     # for marginal sampler, we need to re-run the simulation at the current location
-    if is_marginal or state is None:
-      state = NewState( x, state_params )
+    if state.is_marginal:
+      state = StateClass( theta, state.params )
 
-    # likelihood only computed once
-    x_loglik   = state.loglikelihood()
-    x_logprior = state.logprior( x )
+    # likelihood only computed once (state knows has already been computed)
+    theta_loglik   = state.loglikelihood()
+    theta_logprior = state.logprior( theta )
     
-    # this is ok for marginal and pseudo-marginal -- only counted once per instantiation
-    nbr_sim_calls += x_state.nbr_sim_calls  
+    # only count if "marginal"; peseduo-marginal does not run simulations
+    this_iters_sim_calls += int(state.is_marginal)*state.nbr_sim_calls
       
     # log-density of proposals
-    q_to_x_logproposal = q_state.logproposal( x, q )  
-    x_to_q_logproposal =  state.logproposal( q, x ) 
+    q_to_theta_logproposal = q_state.logproposal( theta, q_theta )  
+    theta_to_q_logproposal = state.logproposal( q_theta, theta ) 
     
     # Metropolis-Hastings acceptance log-probability and probability
-    log_acc = min(0.0, q_loglik - x_loglik + q_logprior - x_logprior + x_to_q_logproposal - q_to_x_logproposal )
+    log_acc = min(0.0, q_loglik - theta_loglik + \
+                       q_logprior - theta_logprior + \
+                       theta_to_q_logproposal - q_to_theta_logproposal \
+                 )
     acc     = np.exp( log_acc )
     
     # can also send as u-stream
@@ -58,92 +66,98 @@ def abc_mcmc( all_states, params ):
     accepted = False
     if u <= acc:
       accepted = True
+      nbr_accepts += 1
       
       # move to new state
-      x     = q.copy()
-      state = q_state.copy()
-      loglik = q_loglik + q_logprior
-      
-      # keep track of all states in chain
-      all_states.add( accepted, state )
-    else:
-      # also keep track of rejecttted states (may be of interest for some models)
-      all_states.add( accepted, state, q_state )
-      loglik = p_loglik + p_logprior
+      theta     = q_theta.copy()
+      state     = q_state
+      loglik    = q_loglik + q_logprior
+
+    # keep track of all states in chain
+    if all_states is not None:
+      all_states.add( state, this_iters_sim_calls )
     
+    nbr_sim_calls += this_iters_sim_calls
+    
+    acceptances.append( accepted )
+    accept_rate     = float(nbr_accepts)/float(n+1)
+    efficiency_rate = float(nbr_accepts)/float(nbr_sim_calls)
+    sim_calls.append( this_iters_sim_calls )
     LL.append(loglik)
-    X.append(x.copy())
-  
-  X  = np.array(X)
-  LL = np.array(LL)  
-  return X, all_states
-  
-if __name__ == "__main__":
-  def rand_func():
-    return 3*np.random.randn()
+    thetas.append(theta.copy())
     
-  def sim_func( x ):
-    return x + np.random.randn(3)
-    
-  def stats_func( outputs ):
-    return np.mean(outputs)
-    
-  def discrepancy_func( x_stats, obs_stats ):
-    return np.abs( x_stats - obs_stats )
+  acceptances = np.array(acceptances)
+  sim_calls   = np.array(sim_calls)
+  thetas      = np.array(thetas)
+  LL          =  np.array(LL)  
+  return thetas, LL, acceptances,sim_calls
   
-  N = 10000
-  epsilon = 1.1
-  x_star = 2.0
-  x_star_outs = sim_func( x_star )
-  x_star_stats = stats_func( x_star_outs )
-    
-  params = {}
-  params["obs_stats"]        = x_star_stats
-  params["rand_func"]        = rand_func
-  params["sim_func"]         = sim_func
-  params["stats_func"]       = stats_func
-  params["discrepancy_func"] = discrepancy_func
-  params["epsilon"]          = epsilon
-  params["keep_discrepancy"] = True
-  params["keep_stats"]       = True
-  params["keep_outputs"]     = True
-  params["keep_rejections"]  = True
-  
-  X, results = abc_rejection( N, params )
-  
-  pp.figure(1)
-  pp.clf()
-  pp.subplot(2,2,1)
-  pp.plot( results["REJECT_X"], results["REJECT_S"], 'ro', alpha = 0.25 )
-  pp.plot( results["X"], results["STATS"], 'go', alpha = 0.85 )
-  ax = pp.axis()
-  pp.vlines( [x_star], ax[2], ax[3], color = "k", linewidths=3)
-  pp.hlines( x_star_stats, ax[2], ax[3], color = "k", linewidths=3)
-  pp.fill_between( np.linspace(ax[0], ax[1],10), x_star_stats-epsilon, x_star_stats+epsilon, color="g", alpha=0.5 )
-  pp.ylabel( "discrepancy")
-  pp.xlabel( "theta")
-  pp.axis(ax)
-
-  pp.subplot(2,2,3)
-  pp.hist( X, 10, normed=True, alpha=0.5, color="g" )
-  ax2 = pp.axis()
-  pp.vlines( [x_star], ax[2], ax[3], color = "k", linewidths=3)
-  pp.axis( [ax[0],ax[1],ax2[2],ax2[3]] )
-
-  pp.ylabel( "P(theta)")
-  pp.xlabel( "theta")
-  
-  pp.subplot(2,2,2)
-  pp.hist( results["STATS"], 10, normed=True, alpha=0.5, color="g", orientation = 'horizontal' )
-  ax2 = pp.axis()
-  pp.hlines( x_star_stats, ax2[2], ax2[3], color = "k", linewidths=3)
-  pp.axis( [ax2[0], ax2[1], ax[2], ax[3]] )
-
-  pp.ylabel( "stats")
-  pp.xlabel( "P(stats)")
-  
-  pp.show()
-  
-  
+# if __name__ == "__main__":
+#   def rand_func():
+#     return 3*np.random.randn()
+#     
+#   def sim_func( x ):
+#     return x + np.random.randn(3)
+#     
+#   def stats_func( outputs ):
+#     return np.mean(outputs)
+#     
+#   def discrepancy_func( x_stats, obs_stats ):
+#     return np.abs( x_stats - obs_stats )
+#   
+#   N = 10000
+#   epsilon = 1.1
+#   x_star = 2.0
+#   x_star_outs = sim_func( x_star )
+#   x_star_stats = stats_func( x_star_outs )
+#     
+#   params = {}
+#   params["obs_stats"]        = x_star_stats
+#   params["rand_func"]        = rand_func
+#   params["sim_func"]         = sim_func
+#   params["stats_func"]       = stats_func
+#   params["discrepancy_func"] = discrepancy_func
+#   params["epsilon"]          = epsilon
+#   params["keep_discrepancy"] = True
+#   params["keep_stats"]       = True
+#   params["keep_outputs"]     = True
+#   params["keep_rejections"]  = True
+#   
+#   X, results = abc_rejection( N, params )
+#   
+#   pp.figure(1)
+#   pp.clf()
+#   pp.subplot(2,2,1)
+#   pp.plot( results["REJECT_X"], results["REJECT_S"], 'ro', alpha = 0.25 )
+#   pp.plot( results["X"], results["STATS"], 'go', alpha = 0.85 )
+#   ax = pp.axis()
+#   pp.vlines( [x_star], ax[2], ax[3], color = "k", linewidths=3)
+#   pp.hlines( x_star_stats, ax[2], ax[3], color = "k", linewidths=3)
+#   pp.fill_between( np.linspace(ax[0], ax[1],10), x_star_stats-epsilon, x_star_stats+epsilon, color="g", alpha=0.5 )
+#   pp.ylabel( "discrepancy")
+#   pp.xlabel( "theta")
+#   pp.axis(ax)
+# 
+#   pp.subplot(2,2,3)
+#   pp.hist( X, 10, normed=True, alpha=0.5, color="g" )
+#   ax2 = pp.axis()
+#   pp.vlines( [x_star], ax[2], ax[3], color = "k", linewidths=3)
+#   pp.axis( [ax[0],ax[1],ax2[2],ax2[3]] )
+# 
+#   pp.ylabel( "P(theta)")
+#   pp.xlabel( "theta")
+#   
+#   pp.subplot(2,2,2)
+#   pp.hist( results["STATS"], 10, normed=True, alpha=0.5, color="g", orientation = 'horizontal' )
+#   ax2 = pp.axis()
+#   pp.hlines( x_star_stats, ax2[2], ax2[3], color = "k", linewidths=3)
+#   pp.axis( [ax2[0], ax2[1], ax[2], ax[3]] )
+# 
+#   pp.ylabel( "stats")
+#   pp.xlabel( "P(stats)")
+#   
+#   pp.show()
+#   
+#   
       
   
