@@ -14,6 +14,7 @@ def abc_rejection( nbr_samples, epsilon, state, StateClass, all_states = None, v
     if verbose:
       print "n = %8d of %d"%(n,nbr_samples)
     accepted = False
+    this_iters_sim_calls = 0
     
     # repeat until accepted
     while accepted is False:
@@ -23,21 +24,27 @@ def abc_rejection( nbr_samples, epsilon, state, StateClass, all_states = None, v
       # simuation -> outputs -> statistics -> discrepancies
       theta_state    = StateClass( theta, state.params )
       theta_disc     = theta_state.discrepancy()
-      
-      #if verbose:
-      #  print "    theta = %3.3f   stats = %3.3f  disc = %3.3f"%(theta, theta_state.get_statistics(), theta_disc )
+      this_iters_sim_calls += theta_state.nbr_sim_calls
       
       # all discrepancies much be less than all epsilons
       if np.all( theta_disc <= epsilon ):
         accepted = True
-        thetas.append(theta)
         nbr_accepts += 1
-        acceptances.append(1)
+        thetas.append(theta)
+        nbr_sim_calls += this_iters_sim_calls
       
+      # this should work even if do not use "all_states"
       if all_states is not None:  
-        all_states.add( theta_state, theta_state.nbr_sim_calls, accepted )
+        # only accepted are valid states for rejection sampling
+        if accepted:
+          all_states.add( theta_state, this_iters_sim_calls, accepted )
+          
+        # we may care about the rejected samples, however
+        else:
+          all_states.add_invalid( theta_state )
+          
   thetas = np.array(thetas) 
-  acceptances = np.array(acceptances)   
+  #acceptances = np.array(acceptances)   
   return thetas
   
 if __name__ == "__main__":

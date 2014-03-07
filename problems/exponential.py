@@ -15,7 +15,8 @@ class ExponentialProblem( BaseProblem ):
     self.beta  = params["beta"]
     
     # proposal params (LogNormal)
-    self.proposal_std    = params["q_stddev"]
+    if params.has_key("q_stddev"):
+      self.proposal_std    = params["q_stddev"]
     self.proposal_rand   = lognormal_rand
     self.proposal_logpdf = lognormal_logpdf
     

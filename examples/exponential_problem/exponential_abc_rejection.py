@@ -26,7 +26,7 @@ state_params["statistics_function"]   = problem.statistics_function
 # state_params["epsilon"]               = epsilon
 
 nbr_samples = 1000
-epsilon     = 0.5
+epsilon     = 2.5
 theta0 = problem.theta_prior_rand()
 state  = State( theta0, state_params )
 all_states = AllStates()

@@ -3,7 +3,7 @@ import scipy as sp
 import pylab as pp
 
 class BaseAllStates( object ):
-  def __init__(self):
+  def __init__(self, keep_invalid = False):
     self.thetas          = []
     self.states          = []
     self.accepted        = []
@@ -14,7 +14,8 @@ class BaseAllStates( object ):
     self.statistics      = None
     self.observations    = None
     
-    self.keep_rejections = True
+    self.invalid_thetas   = []
+    self.keep_invalid     = keep_invalid
   
   def rejection_rate( self ):
     return 1.0 - self.acceptance_rate()
@@ -25,15 +26,8 @@ class BaseAllStates( object ):
   def acceptance_rate_per_simulation(self):
     return float( self.nbr_acceptances ) / float( self.nbr_sim_calls )
     
-  def get_thetas( self, burnin = 0, accepted_only = True ):
-    if self.keep_rejections:
-      if accepted_only:
-        I = pp.find( np.array(self.accepted))
-        return np.array( self.thetas )[I[burnin:],:]
-      else:
-        return np.array( self.thetas )[burnin:,:], np.array(acceptances)[burnin:]
-    else:    
-      np.array( self.thetas )[burnin:,:]
+  def get_thetas( self, burnin = 0, accepted_only = False ):
+    return np.array( self.thetas )[burnin:,:]
       
   def get_statistics( self, burnin = 1):
     if self.statistics is None:
@@ -59,5 +53,7 @@ class BaseAllStates( object ):
     if accepted:
       self.nbr_acceptances += 1
       self.thetas.append( state.theta )
-    elif self.keep_rejections:
-      self.thetas.append( state.theta )
+      
+  def add_invalid( self, state ):
+    if self.keep_invalid:
+      self.invalid_thetas.append( state.thetas )

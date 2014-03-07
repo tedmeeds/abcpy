@@ -53,7 +53,7 @@ def abc_mcmc( nbr_samples, state, model, all_states = None ):
 
     # keep track of all states in chain
     if all_states is not None:
-      all_states.add( state, this_iters_sim_calls )
+      all_states.add( state, this_iters_sim_calls, accepted )
     
     nbr_sim_calls += this_iters_sim_calls
     

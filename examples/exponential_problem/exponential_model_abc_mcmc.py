@@ -20,7 +20,7 @@ problem = Problem( problem_params, force_init = True )
 
 # since we are running abc_rejection, use a distance epsilon state
 state_params = {}
-state_params["S"]                          = 1
+state_params["S"]                          = 5
 state_params["obs_statistics"]             = problem.get_obs_statistics()
 state_params["theta_prior_rand_func"]      = problem.theta_prior_rand
 state_params["theta_prior_logpdf_func"]    = problem.theta_prior_logpdf
