@@ -1,8 +1,9 @@
 from abcpy.problems.exponential    import ExponentialProblem   as Problem
-from abcpy.algos.mcmc         import abc_mcmc       
+from abcpy.algos.model_mcmc         import abc_mcmc       
 from abcpy.states.kernel_epsilon import KernelEpsilonState as State
 from abcpy.states.all_states       import BaseAllStates as AllStates
 from abcpy.kernels.gaussian import log_gaussian_kernel
+from abcpy.models.metropolis_hastings_model import BaseMetropolisHastingsModel as Model
 
 import pylab as pp
 
@@ -31,6 +32,9 @@ state_params["log_kernel_func"]            = log_gaussian_kernel
 state_params["is_marginal"]                = True
 state_params["epsilon"]                    = 0.7
 
+model_params = {}
+model = Model( model_params)
+
 nbr_samples = 5000
 #epsilon     = 0.5
 theta0 = problem.theta_prior_rand()
@@ -40,7 +44,7 @@ all_states = AllStates()
 all_states.add( state, state.nbr_sim_calls, accepted=True )
 
 print "***************  RUNNING ABC MCMC ***************"
-thetas, LL, acceptances,sim_calls = abc_mcmc( nbr_samples, state, all_states  )
+thetas, LL, acceptances,sim_calls = abc_mcmc( nbr_samples, state, model, all_states  )
 print "***************  DONE ABC MCMC    ***************"
 
 print "***************  VIEW RESULTS ***************"

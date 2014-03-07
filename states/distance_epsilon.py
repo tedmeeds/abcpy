@@ -12,6 +12,9 @@ import pylab as pp
 # =========================================================================== #
 class DistanceEpsilonState( BaseState ):
   
+  def new( self, theta, params ):
+    return DistanceEpsilonState( theta, params )
+    
   def load_params( self, params ):
 
     

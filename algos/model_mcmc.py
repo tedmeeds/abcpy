@@ -2,17 +2,17 @@ import numpy as np
 import pylab as pp
 
   
-def abc_mcmc( nbr_samples, state, all_states = None ):
+def abc_mcmc( nbr_samples, state, model, all_states = None ):
   assert state is not None, "need to start with a state"
   
   # init with current state's theta
-  theta          = state.theta
+  #theta          = state.theta
   theta_loglik   = state.loglikelihood()
-  theta_logprior = state.logprior( theta )
+  theta_logprior = state.logprior()
   loglik         = theta_loglik + theta_logprior
   
   # init states
-  thetas          = [theta]
+  thetas          = [state.theta]
   LL              = [loglik]
   nbr_sim_calls   = state.nbr_sim_calls
   acceptances     = [True]
@@ -21,54 +21,35 @@ def abc_mcmc( nbr_samples, state, all_states = None ):
   for n in xrange(nbr_samples):
     this_iters_sim_calls = 0
     
-    # sample q from a proposal distribution
-    q_theta = state.proposal_rand( theta )
-    
     # create new state for proposal q
-    q_state    = state.new( q_theta, state.params )
-    
-    # simulation -> outputs -> statistics -> loglikelihood 
-    q_loglik   = q_state.loglikelihood()
-    
-    # prior log-density
-    q_logprior = q_state.logprior( q_theta )
+    q_state    = state.new( state.proposal_rand( state.theta ), state.params )
     
     # keep track of all sim calls
     this_iters_sim_calls += q_state.nbr_sim_calls
     
     # for marginal sampler, we need to re-run the simulation at the current location
     if state.is_marginal:
-      state = state.new( theta, state.params )
-
-    # likelihood only computed once (state knows has already been computed)
-    theta_loglik   = state.loglikelihood()
-    theta_logprior = state.logprior( theta )
+      state = state.new( state.theta, state.params )
     
     # only count if "marginal"; peseduo-marginal does not run simulations
     this_iters_sim_calls += int(state.is_marginal)*state.nbr_sim_calls
-      
-    # log-density of proposals
-    q_to_theta_logproposal = q_state.logproposal( theta, q_theta )  
-    theta_to_q_logproposal = state.logproposal( q_theta, theta ) 
+
+    model.set_proposed_state( q_state )
+    model.set_current_state( state )
+    log_acc = model.log_acceptance()
     
-    # Metropolis-Hastings acceptance log-probability and probability
-    log_acc = min(0.0, q_loglik - theta_loglik + \
-                       q_logprior - theta_logprior + \
-                       q_to_theta_logproposal - theta_to_q_logproposal \
-                 )
-     
-    # work with log for numerical reasons (avoid overflow)
-    accepted = False        
     # can also send as u-stream
-    u = np.random.rand()    
+    u = np.random.rand() 
+  
+    # the MH accept-reject step
+    accepted = False   
     if (log_acc >= 0) or (u <= np.exp( log_acc ) ):
       accepted = True
       nbr_accepts += 1
       
       # move to new state
-      theta     = q_theta.copy()
       state     = q_state
-      loglik    = q_loglik + q_logprior
+      loglik    = state.loglikelihood() + state.logprior()
 
     # keep track of all states in chain
     if all_states is not None:
@@ -81,7 +62,7 @@ def abc_mcmc( nbr_samples, state, all_states = None ):
     efficiency_rate = float(nbr_accepts)/float(nbr_sim_calls)
     sim_calls.append( this_iters_sim_calls )
     LL.append(loglik)
-    thetas.append(theta.copy())
+    thetas.append(state.theta.copy())
     
   acceptances = np.array(acceptances)
   sim_calls   = np.array(sim_calls)

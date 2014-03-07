@@ -13,6 +13,9 @@ import pylab as pp
 # =========================================================================== #
 class KernelEpsilonState( BaseState ):
   
+  def new( self, theta, params ):
+    return KernelEpsilonState( theta, params )
+    
   def load_params( self, params ):
     # prior and proposal distribution functions
     self.theta_prior_rand_func      = params["theta_prior_rand_func"]
