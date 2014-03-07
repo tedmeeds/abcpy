@@ -1,10 +1,12 @@
 from abcpy.problems.exponential    import ExponentialProblem   as Problem
 from abcpy.algos.model_mcmc         import abc_mcmc       
-from abcpy.states.kernel_epsilon import KernelEpsilonState as State
+# from abcpy.states.kernel_epsilon import KernelEpsilonState as State
+from abcpy.states.synthetic_likelihood_model import SyntheticLikelihoodModelState as State
 from abcpy.states.all_states       import BaseAllStates as AllStates
 from abcpy.kernels.gaussian import log_gaussian_kernel
 from abcpy.models.metropolis_hastings_model import BaseMetropolisHastingsModel as Model
 
+import numpy as np
 import pylab as pp
 
 # exponential distributed observations with Gamma(alpha,beta) prior over lambda
@@ -14,7 +16,7 @@ problem_params["beta"]            = 0.1
 problem_params["theta_star"]      = 0.1
 problem_params["N"]               = 500  # how many observations we draw per simulation
 problem_params["seed"]            = 0
-problem_params["q_stddev"]        = 0.2
+problem_params["q_stddev"]        = 0.25
 problem = Problem( problem_params, force_init = True )
 
 
@@ -29,15 +31,16 @@ state_params["theta_proposal_logpdf_func"] = problem.theta_proposal_logpdf
 state_params["simulation_function"]        = problem.simulation_function
 state_params["statistics_function"]        = problem.statistics_function
 state_params["log_kernel_func"]            = log_gaussian_kernel
-state_params["is_marginal"]                = True
-state_params["epsilon"]                    = 0.7
+state_params["is_marginal"]                = False
+state_params["epsilon"]                    = 0.0
 
 model_params = {}
 model = Model( model_params)
 
-nbr_samples = 5000
+nbr_samples = 15000
 #epsilon     = 0.5
-theta0 = problem.theta_prior_rand()
+theta0 = max(np.array([1e-3]), problem.theta_prior_rand() )
+print "INIT THETA = ",theta0
 state  = State( theta0, state_params )
 loglik = state.loglikelihood()
 all_states = AllStates()
@@ -54,3 +57,4 @@ print "***************  DONE VIEW    ***************"
 
 print "TODO"
 print "verify kernel epsilon on stats"
+print "improve proposal for exponential theta near 0 ... seems to get stuck"

@@ -1,18 +1,9 @@
+from abcpy.models.metropolis_hastings_model import BaseMetropolisHastingsModel
 
-
-class BaseMetropolisHastingsModel( object ):
-  def __init__( self, params ):
-    self.params = params
-    self.load_params( params )
+class AdaptiveSyntheticLikelihoodModel( BaseMetropolisHastingsModel ):
     
   def load_params( self, params ):
     pass
-    
-  def set_proposed_state( self, proposed_state ):
-    self.proposed_state = proposed_state
-    
-  def set_current_state( self, current_state ):
-    self.current_state = current_state
     
   def log_acceptance( self ):
     q_state = self.proposed_state
@@ -35,11 +26,18 @@ class BaseMetropolisHastingsModel( object ):
     q_to_theta_logproposal = q_state.logproposal( theta, q_theta )  
     theta_to_q_logproposal = state.logproposal( q_theta, theta )
     
+    q_mu_stats     =  q_state.stats.mean(0)
+    q_cov_stats    =  q_state.stats.cov()
+    q_cov_mu_stats = q_cov_stats / q_state.S
+    
+    mu_stats     =  state.stats.mean(0)
+    cov_stats    =  state.stats.cov()
+    cov_mu_stats =  state.stats.cov() / state.S
+    
     # Metropolis-Hastings acceptance log-probability and probability
     log_acc = min(0.0, q_loglik - theta_loglik + \
                        q_logprior - theta_logprior + \
                        q_to_theta_logproposal - theta_to_q_logproposal \
                  )
-    #print q_loglik,theta_loglik
                  
     return log_acc

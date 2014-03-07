@@ -50,9 +50,9 @@ class BaseAllStates( object ):
     self.nbr_sim_calls += nbr_sim_calls
     self.accepted.append( accepted )
     self.sim_calls.append( nbr_sim_calls )
+    self.thetas.append( state.theta )
     if accepted:
       self.nbr_acceptances += 1
-      self.thetas.append( state.theta )
       
   def add_invalid( self, state ):
     if self.keep_invalid:

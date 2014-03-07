@@ -24,19 +24,21 @@ def abc_mcmc( nbr_samples, state, model, all_states = None ):
     # create new state for proposal q
     q_state    = state.new( state.proposal_rand( state.theta ), state.params )
     
-    # keep track of all sim calls
-    this_iters_sim_calls += q_state.nbr_sim_calls
+    
     
     # for marginal sampler, we need to re-run the simulation at the current location
     if state.is_marginal:
       state = state.new( state.theta, state.params )
-    
-    # only count if "marginal"; peseduo-marginal does not run simulations
-    this_iters_sim_calls += int(state.is_marginal)*state.nbr_sim_calls
 
     model.set_proposed_state( q_state )
     model.set_current_state( state )
     log_acc = model.log_acceptance()
+    
+    # keep track of all sim calls
+    this_iters_sim_calls += q_state.nbr_sim_calls
+    
+    # only count if "marginal"; peseduo-marginal does not run simulations
+    this_iters_sim_calls += int(state.is_marginal)*state.nbr_sim_calls
     
     # can also send as u-stream
     u = np.random.rand() 

@@ -135,6 +135,7 @@ class ExponentialProblem( BaseProblem ):
     pp.axis([self.range[0],self.range[1],ax[2],ax[3]])
     set_label_fonsize( sp, label_size )
     
+    #pdb.set_trace()
     print "ERROR  ",bin_errors_1d( self.coarse_theta_range, self.posterior_cdf_bins, thetas )
     # return handle to figure for further manipulation
     return f
