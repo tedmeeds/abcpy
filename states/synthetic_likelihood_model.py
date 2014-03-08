@@ -39,8 +39,8 @@ class SyntheticLikelihoodModelState( BaseState ):
     
     # 
     self.loglik           = None
-    
-  def loglikelihood( self, theta = None ):
+  
+  def precomputes( self, theta = None ):
     if (theta is None) and (self.loglik is not None):
       return self.loglik
     
@@ -56,7 +56,6 @@ class SyntheticLikelihoodModelState( BaseState ):
       # simulation -> outputs -> statistics -> loglikelihood
       self.sim_outs.append( self.simulation_function( self.theta ) ); self.nbr_sim_calls+=1
       self.stats.append( self.statistics_function( self.sim_outs[-1] ) )
-      #self.loglikelihoods[s] = self.log_kernel_func( self.stats[-1], self.obs_statistics, self.epsilon )
     self.stats      = np.array(self.stats)
     self.statistics = np.mean( self.stats, 0 )
     self.mu_stats   = self.statistics
@@ -64,12 +63,22 @@ class SyntheticLikelihoodModelState( BaseState ):
     self.cov_mu_stats = self.cov_stats / self.S
     
     #self.loglik = log_pdf_full_mvn( self.obs_statistics, self.mu_stats, self.cov_stats )
-    self.loglik     = np.squeeze(gaussian_logpdf( self.obs_statistics, self.mu_stats, self.epsilon+np.sqrt(self.cov_stats)) )
+    self.loglik = self.loglikelihood_under_model()
     
-    #pdb.set_trace()
-    #print self.loglik
+  def model_parameters(self):
+    self.precomputes()
+    return self.mu_stats, self.cov_stats, self.cov_mu_stats, self.S
+    
+  def loglikelihood_under_model(self): 
+    return np.squeeze(gaussian_logpdf( self.obs_statistics, self.mu_stats, self.epsilon+np.sqrt(self.cov_stats)) )
+      
+  def loglikelihood( self, theta = None ):
+    self.precomputes( theta )
+
     return self.loglik
   
+  def metropolis_hastings_error( self, u = None ):
+    error = 
   def prior_rand(self):
     return self.theta_prior_rand_func()
     
