@@ -10,7 +10,10 @@ class BaseState( object ):
   def __init__( self, theta, params ):
     self.nbr_sim_calls = 0
     self.theta         = theta
-    self.params        = params
+    self.params        = params    
+    
+    self.sim_outs       = []
+    self.stats          = []
     
     self.load_params( self.params )
     

@@ -40,45 +40,83 @@ class SyntheticLikelihoodModelState( BaseState ):
     # 
     self.loglik           = None
   
-  def precomputes( self, theta = None ):
-    if (theta is None) and (self.loglik is not None):
-      return self.loglik
-    
-    # note we are changing the state here, not merely calling a function
-    if theta is not None:
-      self.theta = theta
-    
-    # approximate likelihood by average over S simulations    
-    self.loglikelihoods = np.zeros(self.S)
-    self.sim_outs       = []
-    self.stats          = []
-    for s in range(self.S):
+  def run_sim_and_stats( self, nbr_points ):
+    theta = self.theta
+    sim_outs       = []
+    stats          = []
+    thetas         = []
+    for s in range(nbr_points):
       # simulation -> outputs -> statistics -> loglikelihood
-      self.sim_outs.append( self.simulation_function( self.theta ) ); self.nbr_sim_calls+=1
-      self.stats.append( self.statistics_function( self.sim_outs[-1] ) )
-    self.stats      = np.array(self.stats)
-    self.statistics = np.mean( self.stats, 0 )
-    self.mu_stats   = self.statistics
-    self.cov_stats  = np.cov( self.stats.T )
+      sim_outs.append( self.simulation_function( theta ) ); self.nbr_sim_calls+=1
+      stats.append( self.statistics_function( sim_outs[-1] ) )
+      thetas.append( theta )
+    sim_outs   = np.array(sim_outs)
+    stats      = np.array(stats)
+    thetas     = np.array(thetas)
+    return thetas, sim_outs, stats
+    
+  def acquire( self, nbr_points ):
+    thetas, sim_outs, stats = self.run_sim_and_stats( nbr_points )
+  
+    if len(self.stats) == 0:
+      self.stats      = stats
+      self.sim_ouputs = sim_outs
+    else:
+      self.stats      = np.vstack( (self.stats, stats) )
+      self.sim_ouputs = np.vstack( (self.sim_ouputs, sim_outs) )
+      
+      
+  def update_model( self ): 
+    self.statistics   = np.mean( self.stats, 0 )
+    self.mu_stats     = self.statistics
+    self.cov_stats    = np.cov( self.stats.T )
     self.cov_mu_stats = self.cov_stats / self.S
     
-    #self.loglik = log_pdf_full_mvn( self.obs_statistics, self.mu_stats, self.cov_stats )
-    self.loglik = self.loglikelihood_under_model()
+  #    
+  # def precomputes( self, theta = None ):
+  #   if (theta is None) and (self.loglik is not None):
+  #     return self.loglik
+  #   
+  #   # note we are changing the state here, not merely calling a function
+  #   if theta is not None:
+  #     self.theta = theta
+  #   
+  #   # approximate likelihood by average over S simulations    
+  #   self.loglikelihoods = np.zeros(self.S)
+  #   self.acquire( self.S )
+  #   self.update_model()
+  #   
+  #   #self.loglik = log_pdf_full_mvn( self.obs_statistics, self.mu_stats, self.cov_stats )
+  #   self.loglik = self.loglikelihood_under_model()
     
   def model_parameters(self):
-    self.precomputes()
+    #self.precomputes()
     return self.mu_stats, self.cov_stats, self.cov_mu_stats, self.S
+  
+  def loglikelihood_rand( self, M ):
+    if self.loglik is None:
+      self.loglik = self.loglikelihood()
+      
+    logliks = np.zeros(M)
+    stats = self.obs_statistics
+    std_stats = self.epsilon+np.sqrt(self.cov_stats)
+    std_mu_stats = np.sqrt(self.cov_mu_stats)
+    for m in xrange(M):
+      mu_stats = self.mu_stats + std_mu_stats*np.random.randn()
+      logliks[m] = self.loglikelihood_under_model(stats, mu_stats, std_stats)
+    return logliks
     
-  def loglikelihood_under_model(self): 
-    return np.squeeze(gaussian_logpdf( self.obs_statistics, self.mu_stats, self.epsilon+np.sqrt(self.cov_stats)) )
+  def loglikelihood_under_model(self, stats, mu_stats, std_stats ): 
+    return np.squeeze(gaussian_logpdf( stats, mu_stats, std_stats ))
       
   def loglikelihood( self, theta = None ):
-    self.precomputes( theta )
+    if len(self.stats) == 0:
+      self.acquire( self.S )
+      self.update_model()
+      self.loglik = self.loglikelihood_under_model( self.obs_statistics, self.mu_stats, self.epsilon+np.sqrt(self.cov_stats) )
 
     return self.loglik
-  
-  def metropolis_hastings_error( self, u = None ):
-    error = 
+    
   def prior_rand(self):
     return self.theta_prior_rand_func()
     

@@ -4,7 +4,8 @@ from abcpy.algos.model_mcmc         import abc_mcmc
 from abcpy.states.synthetic_likelihood_model import SyntheticLikelihoodModelState as State
 from abcpy.states.all_states       import BaseAllStates as AllStates
 from abcpy.kernels.gaussian import log_gaussian_kernel
-from abcpy.models.metropolis_hastings_model import BaseMetropolisHastingsModel as Model
+#from abcpy.models.metropolis_hastings_model import BaseMetropolisHastingsModel as Model
+from abcpy.models.adaptive_synthetic_likelihood_model import AdaptiveSyntheticLikelihoodModel as Model
 
 import numpy as np
 import pylab as pp
@@ -34,13 +35,23 @@ state_params["log_kernel_func"]            = log_gaussian_kernel
 state_params["is_marginal"]                = False
 state_params["epsilon"]                    = 0.0
 
+
+
 model_params = {}
+# adaptive-SL params
+model_params["xi"]            = 0.4
+model_params["M"]             = 100
+model_params["deltaS"]        = 5
+model_params["max_nbr_tries"] = 3
+
 model = Model( model_params)
 
 nbr_samples = 15000
 #epsilon     = 0.5
 theta0 = max(np.array([1e-3]), problem.theta_prior_rand() )
 print "INIT THETA = ",theta0
+theta0 *= 0
+theta0 += 0.1
 state  = State( theta0, state_params )
 loglik = state.loglikelihood()
 all_states = AllStates()

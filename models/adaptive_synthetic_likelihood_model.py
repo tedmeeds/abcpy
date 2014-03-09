@@ -1,6 +1,8 @@
 from abcpy.models.metropolis_hastings_model import BaseMetropolisHastingsModel
+import numpy as np
+import pylab as pp
 
-def unconditional_metropolis_hastings_error( alphas, tau, u ):
+def conditional_metropolis_hastings_error( alphas, tau, u ):
   # alphas:  random samples of acceptance probabiltiies
   # tau:     threshold, typically the empirical median of alphas
   
@@ -20,7 +22,8 @@ def unconditional_metropolis_hastings_error( alphas, tau ):
   # alphas:  random samples of acceptance probabiltiies
   # tau:     threshold, typically the empirical median of alphas
   err = 0.0
-  u_stream = np.linspace( 0, 1, 0.001 )
+  #u_stream = np.linspace( 0, 1, 1000 )
+  u_stream = np.random.rand( 100 )
   
   # "integrate" over u draws -- NB this is pretty inefficient way of doing it
   for u in u_stream:
@@ -44,14 +47,14 @@ class AdaptiveSyntheticLikelihoodModel( BaseMetropolisHastingsModel ):
     else:
       return conditional_metropolis_hastings_error( acceptance_values, self.median, u )
   
-  def self.compute_log_acceptance_offset( self ):
+  def compute_log_acceptance_offset( self ):
     # prior log-density
-    q_logprior     = self.proposed_state.logprior( self.proposed_state.q_theta )
+    q_logprior     = self.proposed_state.logprior( self.proposed_state.theta )
     theta_logprior = self.current_state.logprior( self.current_state.theta )
   
     # log-density of proposals
     q_to_theta_logproposal = self.proposed_state.logproposal( self.current_state.theta, self.proposed_state.theta )  
-    theta_to_q_logproposal = self.current_state.logproposal( q_theta, self.current_state.theta )
+    theta_to_q_logproposal = self.current_state.logproposal( self.proposed_state.theta, self.current_state.theta )
       
     # this quantity is constant, the log-likelihood varies
     return q_logprior - theta_logprior + q_to_theta_logproposal - theta_to_q_logproposal
@@ -60,28 +63,38 @@ class AdaptiveSyntheticLikelihoodModel( BaseMetropolisHastingsModel ):
     # this quantity is constant, the log-likelihood varies
     self.log_acceptance_offset = self.compute_log_acceptance_offset()
     
-    error = np.inf
+    self.error = np.inf
     nbr_tries = 0
-    while (error > self.xi) and (nbr_tries < self.max_nbr_tries):
+    while (self.error > self.xi) and (nbr_tries < self.max_nbr_tries):
       proposed_logliks = self.proposed_state.loglikelihood_rand( self.M )
       current_logliks  = self.current_state.loglikelihood_rand( self.M )
     
       self.log_accs = self.log_acceptance_offset + proposed_logliks - current_logliks
       self.accs     = np.exp(self.log_accs)
       
-      I = pp.find( log_accs > 0 )
-      log_accs[I] = 0
+      I = pp.find( self.log_accs > 0 )
+      self.log_accs[I] = 0
       
       self.error = self.metropolis_hastings_error( self.accs, u )
+      #print "MH error = ", self.error
       nbr_tries += 1
       
       if nbr_tries < self.max_nbr_tries:
         if self.error > self.xi:
+          print nbr_tries,"error > xi: ",self.error
           self.acquire_points()
+    if nbr_tries > 1:
+      print "    final error > xi: ",self.error
+    
         
     # Metropolis-Hastings acceptance log-probability and probability
-    return np.log( self.median )
+    if self.median > 0:
+      return np.log( self.median )
+    else:
+      return -np.inf
     
   def acquire_points( self ):
-    assert False, "TODO"
-    pass
+    if np.random.rand() < 0.5:
+      self.proposed_state.acquire( self.deltaS )
+    else:
+      self.current_state.acquire( self.deltaS )
