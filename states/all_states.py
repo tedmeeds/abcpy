@@ -37,8 +37,8 @@ class BaseAllStates( object ):
       self.statistics = np.array(self.statistics)
     return self.statistics
   
-  def get_sim_calls(self):
-    return np.array( self.sim_calls )
+  def get_sim_calls(self, burnin = 1):
+    return np.array( self.sim_calls )[burnin:]
     
   def get_acceptances(self):
     return np.array( self.accepted )

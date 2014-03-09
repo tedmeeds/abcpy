@@ -115,6 +115,7 @@ class ExponentialProblem( BaseProblem ):
     # extract from states
     thetas = states_object.get_thetas(burnin=burnin)
     stats  = states_object.get_statistics(burnin=burnin)
+    nsims  = states_object.get_sim_calls(burnin=burnin)
     
     # plot sample distribution of thetas, add vertical line for true theta, theta_star
     f = pp.figure()
@@ -135,6 +136,44 @@ class ExponentialProblem( BaseProblem ):
     pp.axis([self.range[0],self.range[1],ax[2],ax[3]])
     set_label_fonsize( sp, label_size )
     
+    total_sims = states_object.nbr_sim_calls
+    all_sims = nsims.sum()
+    at_burnin = total_sims-all_sims
+    errs = []
+    time_ids = []
+    nbr_sims = []
+    
+    for time_id in [1,5,10,50,100,500,1000,2000,5000,10000,15000,20000,30000,40000,50000]:
+      if time_id <= len(thetas):
+        errs.append( bin_errors_1d(self.coarse_theta_range, self.posterior_cdf_bins, thetas[:time_id]) )
+        time_ids.append(time_id)
+        nbr_sims.append(nsims[:time_id].sum()+at_burnin)
+        
+    errs = np.array(errs)
+    time_ids = np.array(time_ids)
+    nbr_sims = np.array(nbr_sims)
+    
+    f2 = pp.figure()
+    sp1 = f2.add_subplot(2,2,1)
+    pp.loglog( time_ids, errs, "bo-", lw=2)
+    pp.xlabel( "nbr samples")
+    pp.ylabel( "err")
+    pp.grid('on')
+    sp3 = f2.add_subplot(2,2,3)
+    pp.semilogx( time_ids, errs, "bo-", lw=2)
+    pp.xlabel( "nbr samples")
+    pp.ylabel( "err")
+    pp.grid('on')
+    sp2 = f2.add_subplot(2,2,2)
+    pp.loglog( nbr_sims, errs, "bo-", lw=2)
+    pp.xlabel( "nbr samples")
+    pp.ylabel( "err")
+    pp.grid('on')
+    sp4 = f2.add_subplot(2,2,4)
+    pp.semilogx( nbr_sims, errs, "bo-", lw=2)
+    pp.xlabel( "nbr samples")
+    pp.ylabel( "err")
+    pp.grid('on')
     #pdb.set_trace()
     print "ERROR  ",bin_errors_1d( self.coarse_theta_range, self.posterior_cdf_bins, thetas )
     # return handle to figure for further manipulation
