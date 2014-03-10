@@ -17,8 +17,10 @@ class ExponentialProblem( BaseProblem ):
     # proposal params (LogNormal)
     if params.has_key("q_stddev"):
       self.proposal_std    = params["q_stddev"]
-    self.proposal_rand   = lognormal_rand
-    self.proposal_logpdf = lognormal_logpdf
+    #self.proposal_rand   = lognormal_rand
+    #self.proposal_logpdf = lognormal_logpdf
+    self.proposal_rand   = positive_normal_rand
+    self.proposal_logpdf = normal_logpdf
     
     # "true" parameter setting
     self.theta_star = params["theta_star"]
@@ -44,9 +46,9 @@ class ExponentialProblem( BaseProblem ):
     self.observations   = self.simulation_function( self.theta_star )
     self.obs_statistics = self.statistics_function( self.observations )
     
-    self.min_range = 0.05
-    self.max_range = 0.15
-    self.range = (self.min_range,self.max_range)
+    self.min_range           = 0.05
+    self.max_range           = 0.15
+    self.range               = (self.min_range,self.max_range)
     self.fine_bin_width      = 0.0001
     self.coarse_bin_width    = 0.001
     
@@ -60,12 +62,12 @@ class ExponentialProblem( BaseProblem ):
     self.posterior_mode = (self.N + self.alpha)/(self.observations.sum() + self.beta)
     
     self.true_posterior_logpdf_func = gen_gamma_logpdf(self.alpha+self.N,self.beta+self.observations.sum())
-    self.true_posterior_cdf_func = gen_gamma_cdf(self.alpha+self.N,self.beta+self.observations.sum())
+    self.true_posterior_cdf_func    = gen_gamma_cdf(self.alpha+self.N,self.beta+self.observations.sum())
     
     self.posterior_bars_range = self.coarse_theta_range[:-1] + 0.5*self.coarse_bin_width
-    self.posterior_cdf = self.true_posterior_cdf_func( self.coarse_theta_range )
-    self.posterior_bars = (self.posterior_cdf[1:] - self.posterior_cdf[:-1])/self.coarse_bin_width
-    self.posterior_cdf_bins = self.posterior_cdf[1:] - self.posterior_cdf[:-1]
+    self.posterior_cdf        = self.true_posterior_cdf_func( self.coarse_theta_range )
+    self.posterior_bars       = (self.posterior_cdf[1:] - self.posterior_cdf[:-1])/self.coarse_bin_width
+    self.posterior_cdf_bins   = self.posterior_cdf[1:] - self.posterior_cdf[:-1]
     # done initialization
     self.initialized = True
     
@@ -98,10 +100,11 @@ class ExponentialProblem( BaseProblem ):
     return gamma_logprob( theta, self.alpha, self.beta ) # 1/beta cause of how python implements
       
   def theta_proposal_rand( self, theta ):
-    return self.proposal_rand( np.log(theta), self.proposal_std )
+    return self.proposal_rand( theta, self.proposal_std )
     
   def theta_proposal_logpdf( self, to_theta, from_theta ):
-    return self.proposal_logpdf( to_theta, np.log(from_theta), self.proposal_std )
+    return self.proposal_logpdf( to_theta, from_theta, self.proposal_std )
+    #return self.proposal_logpdf( to_theta, np.log(from_theta), self.proposal_std )
       
   # take samples/staistics etc and "view" this particular problem
   def view_results( self, states_object, burnin = 1 ):
@@ -175,6 +178,8 @@ class ExponentialProblem( BaseProblem ):
     pp.ylabel( "err")
     pp.grid('on')
     #pdb.set_trace()
-    print "ERROR  ",bin_errors_1d( self.coarse_theta_range, self.posterior_cdf_bins, thetas )
+    print "ERROR    ",bin_errors_1d( self.coarse_theta_range, self.posterior_cdf_bins, thetas )
+    print "ACC RATE ", states_object.acceptance_rate()
+    print "SIM      ", total_sims
     # return handle to figure for further manipulation
     return f

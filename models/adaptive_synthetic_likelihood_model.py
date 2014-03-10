@@ -22,8 +22,8 @@ def unconditional_metropolis_hastings_error( alphas, tau ):
   # alphas:  random samples of acceptance probabiltiies
   # tau:     threshold, typically the empirical median of alphas
   err = 0.0
-  #u_stream = np.linspace( 0, 1, 1000 )
-  u_stream = np.random.rand( 100 )
+  u_stream = np.linspace( 0, 1, 100 )
+  #u_stream = np.random.rand( 100 )
   
   # "integrate" over u draws -- NB this is pretty inefficient way of doing it
   for u in u_stream:
@@ -70,21 +70,24 @@ class AdaptiveSyntheticLikelihoodModel( BaseMetropolisHastingsModel ):
       current_logliks  = self.current_state.loglikelihood_rand( self.M )
     
       self.log_accs = self.log_acceptance_offset + proposed_logliks - current_logliks
-      self.accs     = np.exp(self.log_accs)
+      
       
       I = pp.find( self.log_accs > 0 )
       self.log_accs[I] = 0
-      
+      self.accs     = np.exp(self.log_accs)
       self.error = self.metropolis_hastings_error( self.accs, u )
       #print "MH error = ", self.error
       nbr_tries += 1
       
       if nbr_tries < self.max_nbr_tries:
         if self.error > self.xi:
-          print nbr_tries,"error > xi: ",self.error
+          print "\t",nbr_tries, self.median, "  ","error > xi: ",self.error, self.proposed_state.mu_stats, self.proposed_state.n_stats, self.current_state.mu_stats, self.current_state.n_stats
           self.acquire_points()
-    if nbr_tries > 1:
-      print "    final error > xi: ",self.error
+    #if nbr_tries > 1:
+      
+    #print "final ",nbr_tries, self.median, "  ","error > xi: ",self.error, self.proposed_state.mu_stats, self.proposed_state.n_stats, self.current_state.mu_stats, self.current_state.n_stats
+          
+      #print "    final error > xi: ",self.error
     
         
     # Metropolis-Hastings acceptance log-probability and probability

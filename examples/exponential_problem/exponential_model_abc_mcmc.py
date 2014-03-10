@@ -17,13 +17,13 @@ problem_params["beta"]            = 0.1
 problem_params["theta_star"]      = 0.1
 problem_params["N"]               = 500  # how many observations we draw per simulation
 problem_params["seed"]            = 0
-problem_params["q_stddev"]        = 0.25
+problem_params["q_stddev"]        = 0.01
 problem = Problem( problem_params, force_init = True )
 
 
 # since we are running abc_rejection, use a distance epsilon state
 state_params = {}
-state_params["S"]                          = 20
+state_params["S"]                          = 2
 state_params["obs_statistics"]             = problem.get_obs_statistics()
 state_params["theta_prior_rand_func"]      = problem.theta_prior_rand
 state_params["theta_prior_logpdf_func"]    = problem.theta_prior_logpdf
@@ -34,19 +34,20 @@ state_params["statistics_function"]        = problem.statistics_function
 state_params["log_kernel_func"]            = log_gaussian_kernel
 state_params["is_marginal"]                = False
 state_params["epsilon"]                    = 0.0
+#state_params["hierarchy_type"]      = "jeffreys"
+#state_params["hierarchy_type"]      = "jeffreys"
 
 
 
 model_params = {}
 # adaptive-SL params
-model_params["xi"]            = 0.4
-model_params["M"]             = 100
-model_params["deltaS"]        = 5
-model_params["max_nbr_tries"] = 20
-
+model_params["xi"]            = 0.1
+model_params["M"]             = 10
+model_params["deltaS"]        = 20
+model_params["max_nbr_tries"] = 10
 model = Model( model_params)
 
-nbr_samples = 10000
+nbr_samples = 1500
 #epsilon     = 0.5
 theta0 = max(np.array([1e-3]), problem.theta_prior_rand() )
 print "INIT THETA = ",theta0

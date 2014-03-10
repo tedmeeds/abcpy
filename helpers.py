@@ -29,6 +29,21 @@ a2 = 0.230389; loga2 = np.log( a2 )
 a3 = 0.000972; loga3 = np.log( a3 )
 a4 = 0.078188; loga4 = np.log( a4 )
 
+def positive_normal_rand( mu, stddevs, N = 1 ):
+  X = mu + stddevs*np.random.randn( N )
+  
+  I = pp.find( X <= 0 )
+  i = 0
+  while len(I) > 0:
+    X[I] = mu + stddevs*np.random.randn( len(I) )
+    J = pp.find( X[I] <= 0 )
+    I = I[J]
+    
+  return X
+
+def normal_logpdf( X, mu, stddevs ):
+  return gaussian_logpdf( X, mu, stddevs)
+    
 def json_extract_from_list( param_list, key_name, key_value, value_names ):
   # go through param_list, looking for key_name == key_value
   # if found, extract values names from it

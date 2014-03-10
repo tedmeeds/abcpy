@@ -1,5 +1,5 @@
 from abcpy.state import BaseState
-from abcpy.helpers import logsumexp, log_pdf_full_mvn, gaussian_logpdf
+from abcpy.helpers import logsumexp, log_pdf_full_mvn, gaussian_logpdf, inv_wishart_rnd, wishart_rnd
 
 import numpy as np
 import scipy as sp
@@ -29,6 +29,10 @@ class SyntheticLikelihoodModelState( BaseState ):
     self.simulation_function   = params["simulation_function"]
     self.statistics_function   = params["statistics_function"]
     
+    self.hierarchy             = "just_gaussian"
+    if params.has_key("hierarchy_type"):
+      self.hierarchy = params["hierarchy_type"]
+      
     # kernel and its epsilon
     #self.log_kernel_func  = params["log_kernel_func"]
     self.epsilon          = params["epsilon"]
@@ -58,19 +62,26 @@ class SyntheticLikelihoodModelState( BaseState ):
   def acquire( self, nbr_points ):
     thetas, sim_outs, stats = self.run_sim_and_stats( nbr_points )
   
+    #pdb.set_trace()
     if len(self.stats) == 0:
       self.stats      = stats
       self.sim_ouputs = sim_outs
     else:
       self.stats      = np.vstack( (self.stats, stats) )
       self.sim_ouputs = np.vstack( (self.sim_ouputs, sim_outs) )
+    
+    self.update_model()
       
       
   def update_model( self ): 
     self.statistics   = np.mean( self.stats, 0 )
     self.mu_stats     = self.statistics
-    self.cov_stats    = np.cov( self.stats.T )
-    self.cov_mu_stats = self.cov_stats / self.S
+    self.n_stats      = len(self.stats)
+    dif = self.stats - self.mu_stats
+    self.sum_sq_stats = np.dot( dif.T, dif )
+    #self.cov_stats    = np.cov( self.stats.T, ddof = self.n_stats-1 )
+    self.cov_stats    = self.sum_sq_stats / (self.n_stats-1 )
+    self.cov_mu_stats = self.cov_stats / self.n_stats
     
   #    
   # def precomputes( self, theta = None ):
@@ -91,7 +102,7 @@ class SyntheticLikelihoodModelState( BaseState ):
     
   def model_parameters(self):
     #self.precomputes()
-    return self.mu_stats, self.cov_stats, self.cov_mu_stats, self.S
+    return self.mu_stats, self.n_stats, self.sum_sq_stats, self.cov_stats, self.cov_mu_stats
   
   def loglikelihood_rand( self, M ):
     if self.loglik is None:
@@ -102,7 +113,18 @@ class SyntheticLikelihoodModelState( BaseState ):
     std_stats = self.epsilon+np.sqrt(self.cov_stats)
     std_mu_stats = np.sqrt(self.cov_mu_stats)
     for m in xrange(M):
-      mu_stats = self.mu_stats + std_mu_stats*np.random.randn()
+      if self.hierarchy == "jeffreys":
+        cov_stats = wishart_rnd( self.n_stats-1, self.sum_sq_stats )
+        #cov_stats = 
+        std_stats = self.epsilon+np.sqrt(cov_stats)
+        std_mu_stats = np.sqrt(cov_stats/self.n_stats)
+        mu_stats = self.mu_stats + std_mu_stats*np.random.randn()
+        #print "cov_stats", self.cov_stats, "  vs   ", cov_stats
+        #pdb.set_trace()
+      elif self.hierarchy == "just_gaussian":
+        mu_stats = self.mu_stats + std_mu_stats*np.random.randn()
+      else:
+        assert False, "no other type yet"
       logliks[m] = self.loglikelihood_under_model(stats, mu_stats, std_stats)
     return logliks
     
@@ -112,7 +134,7 @@ class SyntheticLikelihoodModelState( BaseState ):
   def loglikelihood( self, theta = None ):
     if len(self.stats) == 0:
       self.acquire( self.S )
-      self.update_model()
+      #self.update_model()
       self.loglik = self.loglikelihood_under_model( self.obs_statistics, self.mu_stats, self.epsilon+np.sqrt(self.cov_stats) )
 
     return self.loglik
