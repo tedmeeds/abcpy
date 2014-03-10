@@ -2,43 +2,43 @@ import numpy as np
 import pylab as pp
 
   
-def abc_mcmc( nbr_samples, state, model, all_states = None ):
-  assert state is not None, "need to start with a state"
+def abc_mcmc( nbr_samples, model ):
+  #assert state is not None, "need to start with a state"
   
   # init with current state's theta
-  #theta          = state.theta
-  theta_loglik   = state.loglikelihood()
-  theta_logprior = state.logprior()
-  loglik         = theta_loglik + theta_logprior
+  #theta_loglik   = state.loglikelihood()
+  #theta_logprior = state.logprior()
+  loglik         = model.current.log_posterior() #theta_loglik + theta_logprior
   
   # init states
-  thetas          = [state.theta]
+  thetas          = [model.current.theta]
   LL              = [loglik]
-  nbr_sim_calls   = state.nbr_sim_calls
+  nbr_sim_calls   = model.current.nbr_sim_calls
   acceptances     = [True]
-  sim_calls       = [state.nbr_sim_calls]
+  sim_calls       = [model.current.nbr_sim_calls]
   nbr_accepts     = 1
   for n in xrange(nbr_samples):
+    model.reset_nbr_sim_calls_this_iter()
     this_iters_sim_calls = 0
     
     # create new state for proposal q
-    q_state    = state.new( state.proposal_rand( state.theta ), state.params )
+    model.propose_state()
+    model.update_current()  # create new state is pseudo-marginal
+    
+    #
     
     
     
-    # for marginal sampler, we need to re-run the simulation at the current location
-    if state.is_marginal:
-      state = state.new( state.theta, state.params )
 
-    model.set_proposed_state( q_state )
-    model.set_current_state( state )
+    #model.set_proposed_state( q_state )
+    #model.set_current_state( state )
     log_acc = model.log_acceptance()
     
     # keep track of all sim calls
-    this_iters_sim_calls += q_state.nbr_sim_calls
+    #this_iters_sim_calls += q_state.nbr_sim_calls
     
     # only count if "marginal"; peseduo-marginal does not run simulations
-    this_iters_sim_calls += int(state.is_marginal)*state.nbr_sim_calls
+    #this_iters_sim_calls += int(state.is_marginal)*state.nbr_sim_calls
     
     # can also send as u-stream
     u = np.random.rand() 
@@ -50,13 +50,17 @@ def abc_mcmc( nbr_samples, state, model, all_states = None ):
       nbr_accepts += 1
       
       # move to new state
-      state     = q_state
-      loglik    = state.loglikelihood() + state.logprior()
+      model.move_to_proposed_state()
+      #state     = q_state
+      #loglik    = state.loglikelihood() + state.logprior()
+    else:
+      model.stay_in_current_state()
 
     # keep track of all states in chain
-    if all_states is not None:
-      all_states.add( state, this_iters_sim_calls, accepted )
+    #if all_states is not None:
+    #  all_states.add( state, this_iters_sim_calls, accepted )
     
+    loglik = model.current.log_posterior()
     nbr_sim_calls += this_iters_sim_calls
     
     acceptances.append( accepted )
@@ -64,7 +68,7 @@ def abc_mcmc( nbr_samples, state, model, all_states = None ):
     efficiency_rate = float(nbr_accepts)/float(nbr_sim_calls)
     sim_calls.append( this_iters_sim_calls )
     LL.append(loglik)
-    thetas.append(state.theta.copy())
+    thetas.append(model.current.theta.copy())
     
   acceptances = np.array(acceptances)
   sim_calls   = np.array(sim_calls)

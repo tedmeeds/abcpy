@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 import pylab as pp
 
-class BaseAllStates( object ):
+class BaseStateRecorder( object ):
   def __init__(self, keep_invalid = False):
     self.thetas          = []
     self.states          = []
@@ -46,7 +46,7 @@ class BaseAllStates( object ):
   def get_states( self, burnin = 1 ):
     return self.states[burnin:]
        
-  def add( self, state, nbr_sim_calls, accepted = True, other_state = None ):
+  def record_state( self, state, nbr_sim_calls, accepted = True, other_state = None ):
     self.nbr_sim_calls += nbr_sim_calls
     self.accepted.append( accepted )
     self.sim_calls.append( nbr_sim_calls )
@@ -54,6 +54,6 @@ class BaseAllStates( object ):
     if accepted:
       self.nbr_acceptances += 1
       
-  def add_invalid( self, state ):
+  def record_invalid( self, state ):
     if self.keep_invalid:
       self.invalid_thetas.append( state.thetas )

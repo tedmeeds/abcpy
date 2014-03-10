@@ -1,7 +1,7 @@
 from abcpy.problems.exponential    import ExponentialProblem   as Problem
 from abcpy.algos.rejection         import abc_rejection       
 from abcpy.states.distance_epsilon import DistanceEpsilonState as State
-from abcpy.states.all_states       import BaseAllStates as AllStates
+from abcpy.states.state_recorder    import BaseStateRecorder as Recorder
 
 import pylab as pp
 
@@ -26,17 +26,17 @@ state_params["statistics_function"]   = problem.statistics_function
 # state_params["epsilon"]               = epsilon
 
 nbr_samples = 1000
-epsilon     = 2.5
+epsilon     = 0.5
 theta0 = problem.theta_prior_rand()
 state  = State( theta0, state_params )
-all_states = AllStates()
-all_states.add( state, state.nbr_sim_calls, accepted=False )
+recorder = Recorder()
+recorder.record_state( state, state.nbr_sim_calls, accepted=False )
 
 print "***************  RUNNING ABC REJECTION ***************"
-thetas = abc_rejection( nbr_samples, epsilon, state, State, all_states  )
+thetas = abc_rejection( nbr_samples, epsilon, state, recorder  )
 print "***************  DONE ABC REJECTION    ***************"
 
 print "***************  VIEW RESULTS ***************"
-problem.view_results( all_states, burnin = 0 )
+problem.view_results( recorder, burnin = 0 )
 pp.show()
 print "***************  DONE VIEW    ***************"

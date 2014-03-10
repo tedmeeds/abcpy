@@ -1,8 +1,8 @@
-from abcpy.problems.exponential    import ExponentialProblem   as Problem
-from abcpy.algos.mcmc         import abc_mcmc       
-from abcpy.states.kernel_epsilon import KernelEpsilonState as State
-from abcpy.states.all_states       import BaseAllStates as AllStates
-from abcpy.kernels.gaussian import log_gaussian_kernel
+from abcpy.problems.exponential     import ExponentialProblem as Problem
+from abcpy.algos.mcmc               import abc_mcmc       
+from abcpy.states.kernel_epsilon    import KernelEpsilonState as State
+from abcpy.states.state_recorder    import BaseStateRecorder as Recorder
+from abcpy.kernels.gaussian         import log_gaussian_kernel
 
 import pylab as pp
 
@@ -13,7 +13,7 @@ problem_params["beta"]            = 0.1
 problem_params["theta_star"]      = 0.1
 problem_params["N"]               = 500  # how many observations we draw per simulation
 problem_params["seed"]            = 0
-problem_params["q_stddev"]        = 0.2
+problem_params["q_stddev"]        = 0.01
 problem = Problem( problem_params, force_init = True )
 
 
@@ -31,20 +31,20 @@ state_params["log_kernel_func"]            = log_gaussian_kernel
 state_params["is_marginal"]                = True
 state_params["epsilon"]                    = 0.7
 
-nbr_samples = 5000
+nbr_samples = 3000
 #epsilon     = 0.5
 theta0 = problem.theta_prior_rand()
-state  = State( theta0, state_params )
+state  = State( 0.1+0*theta0, state_params )
 loglik = state.loglikelihood()
-all_states = AllStates()
-all_states.add( state, state.nbr_sim_calls, accepted=True )
+recorder = Recorder()
+recorder.record_state( state, state.nbr_sim_calls, accepted=True )
 
 print "***************  RUNNING ABC MCMC ***************"
-thetas, LL, acceptances,sim_calls = abc_mcmc( nbr_samples, state, all_states  )
+thetas, LL, acceptances,sim_calls = abc_mcmc( nbr_samples, state, recorder  )
 print "***************  DONE ABC MCMC    ***************"
 
 print "***************  VIEW RESULTS ***************"
-problem.view_results( all_states, burnin = 1000 )
+problem.view_results( recorder, burnin = 1000 )
 pp.show()
 print "***************  DONE VIEW    ***************"
 

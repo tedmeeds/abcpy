@@ -1,7 +1,7 @@
 import numpy as np
 import pylab as pp
 
-def abc_rejection( nbr_samples, epsilon, state, StateClass, all_states = None, verbose = True ):
+def abc_rejection( nbr_samples, epsilon, state, recorder= None, verbose = True ):
   # required functions
 
     
@@ -22,9 +22,9 @@ def abc_rejection( nbr_samples, epsilon, state, StateClass, all_states = None, v
       theta = state.prior_rand()
       
       # simuation -> outputs -> statistics -> discrepancies
-      theta_state    = StateClass( theta, state.params )
+      theta_state    = state.new( theta, state.params )
       theta_disc     = theta_state.discrepancy()
-      this_iters_sim_calls += theta_state.nbr_sim_calls
+      this_iters_sim_calls += theta_state.get_nbr_sim_calls_this_iter()
       
       # all discrepancies much be less than all epsilons
       if np.all( theta_disc <= epsilon ):
@@ -34,14 +34,14 @@ def abc_rejection( nbr_samples, epsilon, state, StateClass, all_states = None, v
         nbr_sim_calls += this_iters_sim_calls
       
       # this should work even if do not use "all_states"
-      if all_states is not None:  
+      if recorder is not None:  
         # only accepted are valid states for rejection sampling
         if accepted:
-          all_states.add( theta_state, this_iters_sim_calls, accepted )
+          recorder.record_state( theta_state, this_iters_sim_calls, accepted )
           
         # we may care about the rejected samples, however
         else:
-          all_states.add_invalid( theta_state )
+          recorder.record_invalid( theta_state )
           
   thetas = np.array(thetas) 
   #acceptances = np.array(acceptances)   

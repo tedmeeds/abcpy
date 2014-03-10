@@ -1,8 +1,8 @@
 from abcpy.problems.exponential    import ExponentialProblem   as Problem
 from abcpy.algos.model_mcmc         import abc_mcmc       
 # from abcpy.states.kernel_epsilon import KernelEpsilonState as State
-from abcpy.states.synthetic_likelihood_model import SyntheticLikelihoodModelState as State
-from abcpy.states.all_states       import BaseAllStates as AllStates
+from abcpy.states.synthetic_likelihood import SyntheticLikelihoodState as State
+from abcpy.states.state_recorder       import BaseStateRecorder as Recorder
 from abcpy.kernels.gaussian import log_gaussian_kernel
 from abcpy.models.metropolis_hastings_model import BaseMetropolisHastingsModel as Model
 #from abcpy.models.adaptive_synthetic_likelihood_model import AdaptiveSyntheticLikelihoodModel as Model
@@ -54,16 +54,20 @@ print "INIT THETA = ",theta0
 theta0 *= 0
 theta0 += 0.1
 state  = State( theta0, state_params )
+
+recorder = Recorder()
+recorder.record_state( state, state.nbr_sim_calls, accepted=True )
+
+model.set_current_state( state )
+model.set_recorder( recorder )
 loglik = state.loglikelihood()
-all_states = AllStates()
-all_states.add( state, state.nbr_sim_calls, accepted=True )
 
 print "***************  RUNNING ABC MCMC ***************"
-thetas, LL, acceptances,sim_calls = abc_mcmc( nbr_samples, state, model, all_states  )
+thetas, LL, acceptances,sim_calls = abc_mcmc( nbr_samples, model  )
 print "***************  DONE ABC MCMC    ***************"
 
 print "***************  VIEW RESULTS ***************"
-problem.view_results( all_states, burnin = 0 )
+problem.view_results( recorder, burnin = 0 )
 pp.show()
 print "***************  DONE VIEW    ***************"
 

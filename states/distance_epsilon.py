@@ -40,7 +40,7 @@ class DistanceEpsilonState( BaseState ):
     
     for s in range(self.S):
       # simulation -> outputs -> statistics -> discrepancy
-      self.sim_outs.append( self.simulation_function( self.theta ) ); self.nbr_sim_calls+=1
+      self.sim_outs.append( self.simulation_function( self.theta ) ); self.add_sim_call()
       self.stats.append( self.statistics_function( self.sim_outs[-1] ) )
       self.discrepancies[s] = self.distance( self.stats[-1], self.obs_statistics )
     self.disc = np.mean( self.discrepancies )

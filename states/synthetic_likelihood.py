@@ -12,10 +12,15 @@ import pdb
 #  SyntheticLikelihoodState: also calculates estimators
 #
 # =========================================================================== #
-class SyntheticLikelihoodModelState( BaseState ):
+class SyntheticLikelihoodState( BaseState ):
   
+  def __init__(self, theta, params ):
+    super(SyntheticLikelihoodState, self).__init__(theta, params)
+    self.stats    = []
+    self.sim_outs = []
+    
   def new( self, theta, params ):
-    return SyntheticLikelihoodModelState( theta, params )
+    return SyntheticLikelihoodState( theta, params )
     
   def load_params( self, params ):
     # prior and proposal distribution functions
@@ -44,6 +49,9 @@ class SyntheticLikelihoodModelState( BaseState ):
     # 
     self.loglik           = None
   
+  def log_posterior( self ):
+    return self.loglikelihood() + self.logprior()
+    
   def run_sim_and_stats( self, nbr_points ):
     theta = self.theta
     sim_outs       = []
@@ -51,7 +59,7 @@ class SyntheticLikelihoodModelState( BaseState ):
     thetas         = []
     for s in range(nbr_points):
       # simulation -> outputs -> statistics -> loglikelihood
-      sim_outs.append( self.simulation_function( theta ) ); self.nbr_sim_calls+=1
+      sim_outs.append( self.simulation_function( theta ) ); self.add_sim_call()
       stats.append( self.statistics_function( sim_outs[-1] ) )
       thetas.append( theta )
     sim_outs   = np.array(sim_outs)

@@ -2,7 +2,7 @@ import numpy as np
 import pylab as pp
 
   
-def abc_mcmc( nbr_samples, state, all_states = None ):
+def abc_mcmc( nbr_samples, state, recorder = None ):
   assert state is not None, "need to start with a state"
   
   # init with current state's theta
@@ -34,18 +34,20 @@ def abc_mcmc( nbr_samples, state, all_states = None ):
     q_logprior = q_state.logprior( q_theta )
     
     # keep track of all sim calls
-    this_iters_sim_calls += q_state.nbr_sim_calls
+    this_iters_sim_calls += q_state.get_nbr_sim_calls_this_iter()
     
     # for marginal sampler, we need to re-run the simulation at the current location
     if state.is_marginal:
       state = state.new( theta, state.params )
+    else:
+      state.reset_nbr_sim_calls_this_iter()
 
     # likelihood only computed once (state knows has already been computed)
     theta_loglik   = state.loglikelihood()
     theta_logprior = state.logprior( theta )
     
     # only count if "marginal"; peseduo-marginal does not run simulations
-    this_iters_sim_calls += int(state.is_marginal)*state.nbr_sim_calls
+    this_iters_sim_calls += state.get_nbr_sim_calls_this_iter()
       
     # log-density of proposals
     q_to_theta_logproposal = q_state.logproposal( theta, q_theta )  
@@ -71,8 +73,8 @@ def abc_mcmc( nbr_samples, state, all_states = None ):
       loglik    = q_loglik + q_logprior
 
     # keep track of all states in chain
-    if all_states is not None:
-      all_states.add( state, this_iters_sim_calls, accepted )
+    if recorder is not None:
+      recorder.record_state( state, this_iters_sim_calls, accepted )
     
     nbr_sim_calls += this_iters_sim_calls
     
