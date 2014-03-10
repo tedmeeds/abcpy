@@ -32,7 +32,7 @@ def unconditional_metropolis_hastings_error( alphas, tau ):
   
   return err
   
-class AdaptiveSyntheticLikelihoodModel( BaseMetropolisHastingsModel ):
+class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
     
   def load_params( self, params ):
     self.xi            = params["xi"]
@@ -76,7 +76,6 @@ class AdaptiveSyntheticLikelihoodModel( BaseMetropolisHastingsModel ):
       self.log_accs[I] = 0
       self.accs     = np.exp(self.log_accs)
       self.error = self.metropolis_hastings_error( self.accs, u )
-      #print "MH error = ", self.error
       nbr_tries += 1
       
       if nbr_tries < self.max_nbr_tries:

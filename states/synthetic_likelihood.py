@@ -39,7 +39,6 @@ class SyntheticLikelihoodState( BaseState ):
       self.hierarchy = params["hierarchy_type"]
       
     # kernel and its epsilon
-    #self.log_kernel_func  = params["log_kernel_func"]
     self.epsilon          = params["epsilon"]
     
     # params specific to loglikelihood ans state updates
@@ -91,23 +90,6 @@ class SyntheticLikelihoodState( BaseState ):
     self.cov_stats    = self.sum_sq_stats / (self.n_stats-1 )
     self.cov_mu_stats = self.cov_stats / self.n_stats
     
-  #    
-  # def precomputes( self, theta = None ):
-  #   if (theta is None) and (self.loglik is not None):
-  #     return self.loglik
-  #   
-  #   # note we are changing the state here, not merely calling a function
-  #   if theta is not None:
-  #     self.theta = theta
-  #   
-  #   # approximate likelihood by average over S simulations    
-  #   self.loglikelihoods = np.zeros(self.S)
-  #   self.acquire( self.S )
-  #   self.update_model()
-  #   
-  #   #self.loglik = log_pdf_full_mvn( self.obs_statistics, self.mu_stats, self.cov_stats )
-  #   self.loglik = self.loglikelihood_under_model()
-    
   def model_parameters(self):
     #self.precomputes()
     return self.mu_stats, self.n_stats, self.sum_sq_stats, self.cov_stats, self.cov_mu_stats
@@ -123,12 +105,9 @@ class SyntheticLikelihoodState( BaseState ):
     for m in xrange(M):
       if self.hierarchy == "jeffreys":
         cov_stats = wishart_rnd( self.n_stats-1, self.sum_sq_stats )
-        #cov_stats = 
         std_stats = self.epsilon+np.sqrt(cov_stats)
         std_mu_stats = np.sqrt(cov_stats/self.n_stats)
         mu_stats = self.mu_stats + std_mu_stats*np.random.randn()
-        #print "cov_stats", self.cov_stats, "  vs   ", cov_stats
-        #pdb.set_trace()
       elif self.hierarchy == "just_gaussian":
         mu_stats = self.mu_stats + std_mu_stats*np.random.randn()
       else:

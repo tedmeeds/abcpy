@@ -5,7 +5,7 @@ from abcpy.states.synthetic_likelihood import SyntheticLikelihoodState as State
 from abcpy.states.state_recorder       import BaseStateRecorder as Recorder
 from abcpy.kernels.gaussian import log_gaussian_kernel
 #from abcpy.models.metropolis_hastings_model import BaseMetropolisHastingsModel as Model
-from abcpy.models.adaptive_synthetic_likelihood_model import AdaptiveSyntheticLikelihoodModel as Model
+from abcpy.models.adaptive_metropolis_hastings_model import AdaptiveMetropolisHastingsModel as Model
 
 import numpy as np
 import pylab as pp
