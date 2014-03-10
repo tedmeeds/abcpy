@@ -58,7 +58,12 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
       
     # this quantity is constant, the log-likelihood varies
     return q_logprior - theta_logprior + q_to_theta_logproposal - theta_to_q_logproposal
-    
+ 
+  def loglik_differences_rand( M ):   
+      proposed_logliks = self.proposed.loglikelihood_rand( M )
+      current_logliks  = self.current.loglikelihood_rand( M )
+      return proposed_logliks-current_logliks
+      
   def log_acceptance( self, u = None ):
     # this quantity is constant, the log-likelihood varies
     self.log_acceptance_offset = self.compute_log_acceptance_offset()
@@ -66,8 +71,7 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
     self.error = np.inf
     nbr_tries = 0
     while (self.error > self.xi) and (nbr_tries < self.max_nbr_tries):
-      proposed_logliks = self.proposed.loglikelihood_rand( self.M )
-      current_logliks  = self.current.loglikelihood_rand( self.M )
+      loglik_differences = self.loglik_differences_rand( self.M )
     
       self.log_accs = self.log_acceptance_offset + proposed_logliks - current_logliks
       
