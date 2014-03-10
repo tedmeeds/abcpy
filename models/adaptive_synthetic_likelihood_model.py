@@ -49,12 +49,12 @@ class AdaptiveSyntheticLikelihoodModel( BaseMetropolisHastingsModel ):
   
   def compute_log_acceptance_offset( self ):
     # prior log-density
-    q_logprior     = self.proposed_state.logprior( self.proposed_state.theta )
-    theta_logprior = self.current_state.logprior( self.current_state.theta )
+    q_logprior     = self.proposed.logprior( self.proposed.theta )
+    theta_logprior = self.current.logprior( self.current.theta )
   
     # log-density of proposals
-    q_to_theta_logproposal = self.proposed_state.logproposal( self.current_state.theta, self.proposed_state.theta )  
-    theta_to_q_logproposal = self.current_state.logproposal( self.proposed_state.theta, self.current_state.theta )
+    q_to_theta_logproposal = self.proposed.logproposal( self.current.theta, self.proposed.theta )  
+    theta_to_q_logproposal = self.current.logproposal( self.proposed.theta, self.current.theta )
       
     # this quantity is constant, the log-likelihood varies
     return q_logprior - theta_logprior + q_to_theta_logproposal - theta_to_q_logproposal
@@ -66,8 +66,8 @@ class AdaptiveSyntheticLikelihoodModel( BaseMetropolisHastingsModel ):
     self.error = np.inf
     nbr_tries = 0
     while (self.error > self.xi) and (nbr_tries < self.max_nbr_tries):
-      proposed_logliks = self.proposed_state.loglikelihood_rand( self.M )
-      current_logliks  = self.current_state.loglikelihood_rand( self.M )
+      proposed_logliks = self.proposed.loglikelihood_rand( self.M )
+      current_logliks  = self.current.loglikelihood_rand( self.M )
     
       self.log_accs = self.log_acceptance_offset + proposed_logliks - current_logliks
       
@@ -81,14 +81,8 @@ class AdaptiveSyntheticLikelihoodModel( BaseMetropolisHastingsModel ):
       
       if nbr_tries < self.max_nbr_tries:
         if self.error > self.xi:
-          print "\t",nbr_tries, self.median, "  ","error > xi: ",self.error, self.proposed_state.mu_stats, self.proposed_state.n_stats, self.current_state.mu_stats, self.current_state.n_stats
+          print "\t",nbr_tries, self.median, "  ","error > xi: ",self.error, self.proposed.mu_stats, self.proposed.n_stats, self.current.mu_stats, self.current.n_stats
           self.acquire_points()
-    #if nbr_tries > 1:
-      
-    #print "final ",nbr_tries, self.median, "  ","error > xi: ",self.error, self.proposed_state.mu_stats, self.proposed_state.n_stats, self.current_state.mu_stats, self.current_state.n_stats
-          
-      #print "    final error > xi: ",self.error
-    
         
     # Metropolis-Hastings acceptance log-probability and probability
     if self.median > 0:
@@ -98,6 +92,6 @@ class AdaptiveSyntheticLikelihoodModel( BaseMetropolisHastingsModel ):
     
   def acquire_points( self ):
     if np.random.rand() < 0.5:
-      self.proposed_state.acquire( self.deltaS )
+      self.proposed.acquire( self.deltaS )
     else:
-      self.current_state.acquire( self.deltaS )
+      self.current.acquire( self.deltaS )
