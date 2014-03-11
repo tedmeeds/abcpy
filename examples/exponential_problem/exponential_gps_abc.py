@@ -4,8 +4,14 @@ from abcpy.algos.model_mcmc         import abc_mcmc
 from abcpy.states.synthetic_likelihood import SyntheticLikelihoodState as State
 from abcpy.states.state_recorder       import BaseStateRecorder as Recorder
 from abcpy.kernels.gaussian import log_gaussian_kernel
-from abcpy.metropolis_hastings_models.metropolis_hastings_model import BaseMetropolisHastingsModel as MH_Model
-from abcpy.metropolis_hastings_models.adaptive_metropolis_hastings_model import AdaptiveMetropolisHastingsModel as MH_Model
+#from abcpy.metropolis_hastings_models.metropolis_hastings_model import BaseMetropolisHastingsModel as MH_Model
+from abcpy.metropolis_hastings_models.surrogate_metropolis_hastings_model import SurrogateMetropolisHastingsModel as MH_Model
+
+from abcpy.surrogates.gps import GaussianProcessSurrogate as Surrogate
+
+from progapy.gps.product_gaussian_process import ProductGaussianProcess
+from progapy.factories.json2gp import load_json, build_gp_from_json
+from progapy.viewers.view_1d import view as view_this_gp
 
 import numpy as np
 import pylab as pp
@@ -37,15 +43,23 @@ state_params["epsilon"]                    = 0.0
 #state_params["hierarchy_type"]      = "jeffreys"
 #state_params["hierarchy_type"]      = "jeffreys"
 
+filename = "./examples/exponential_problem/gp.json"
+json_gp = load_json( filename )
+gp = build_gp_from_json( json_gp ) 
+pgp = ProductGaussianProcess( [gp]) 
+surrogate_params = {}
+surrogate_params["gp"] = pgp
+surrogate_params["obs_statistics"]     = state_params["obs_statistics"]
+
 
 
 model_params = {}
 # adaptive-SL params
-model_params["xi"]            = 0.1
-model_params["M"]             = 10
+model_params["xi"]            = 0.3
+model_params["M"]             = 100
 model_params["deltaS"]        = 20
 model_params["max_nbr_tries"] = 10
-model = Model( model_params)
+model_params["gp_json"]       = json_gp
 
 nbr_samples = 1500
 #epsilon     = 0.5
@@ -54,6 +68,12 @@ print "INIT THETA = ",theta0
 theta0 *= 0
 theta0 += 0.1
 state  = State( theta0, state_params )
+
+surrogate_params["run_sim_and_stats_func"] = state.run_sim_and_stats
+surrogate = Surrogate( surrogate_params )
+
+model_params["surrogate"]     = surrogate
+model = MH_Model( model_params)
 
 recorder = Recorder()
 recorder.record_state( state, state.nbr_sim_calls, accepted=True )
@@ -68,6 +88,8 @@ print "***************  DONE ABC MCMC    ***************"
 
 print "***************  VIEW RESULTS ***************"
 problem.view_results( recorder, burnin = 0 )
+pp.figure()
+view_this_gp( gp, x_range = [0,0.5] )
 pp.show()
 print "***************  DONE VIEW    ***************"
 

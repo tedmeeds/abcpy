@@ -24,7 +24,10 @@ class BaseMetropolisHastingsModel( object ):
     if self.proposed is not None:
       self.nbr_sim_calls_this_iter += self.proposed.get_nbr_sim_calls_this_iter()
     return self.nbr_sim_calls_this_iter 
-    
+  
+  def describe_states(self):
+    return ""
+      
   def load_params( self, params ):
     pass
   

@@ -1,4 +1,4 @@
-from abcpy.models.metropolis_hastings_model import BaseMetropolisHastingsModel
+from abcpy.metropolis_hastings_models.metropolis_hastings_model import BaseMetropolisHastingsModel
 import numpy as np
 import pylab as pp
 
@@ -73,7 +73,7 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
     while (self.error > self.xi) and (nbr_tries < self.max_nbr_tries):
       loglik_differences = self.loglik_differences_rand( self.M )
     
-      self.log_accs = self.log_acceptance_offset + proposed_logliks - current_logliks
+      self.log_accs = self.log_acceptance_offset + loglik_differences
       
       
       I = pp.find( self.log_accs > 0 )
@@ -84,7 +84,7 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
       
       if nbr_tries < self.max_nbr_tries:
         if self.error > self.xi:
-          print "\t",nbr_tries, self.median, "  ","error > xi: ",self.error, self.proposed.mu_stats, self.proposed.n_stats, self.current.mu_stats, self.current.n_stats
+          print "\t",nbr_tries, self.median, "  ","error > xi: ",self.error, self.describe_states()
           self.acquire_points()
         
     # Metropolis-Hastings acceptance log-probability and probability

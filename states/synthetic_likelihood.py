@@ -51,8 +51,8 @@ class SyntheticLikelihoodState( BaseState ):
   def log_posterior( self ):
     return self.loglikelihood() + self.logprior()
     
-  def run_sim_and_stats( self, nbr_points ):
-    theta = self.theta
+  def run_sim_and_stats( self, theta, nbr_points ):
+    #theta = self.theta
     sim_outs       = []
     stats          = []
     thetas         = []
@@ -67,7 +67,7 @@ class SyntheticLikelihoodState( BaseState ):
     return thetas, sim_outs, stats
     
   def acquire( self, nbr_points ):
-    thetas, sim_outs, stats = self.run_sim_and_stats( nbr_points )
+    thetas, sim_outs, stats = self.run_sim_and_stats( self.theta, nbr_points )
   
     #pdb.set_trace()
     if len(self.stats) == 0:
@@ -78,6 +78,8 @@ class SyntheticLikelihoodState( BaseState ):
       self.sim_ouputs = np.vstack( (self.sim_ouputs, sim_outs) )
     
     self.update_model()
+    
+    return thetas, sim_outs, stats
       
       
   def update_model( self ): 
