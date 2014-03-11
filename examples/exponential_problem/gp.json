@@ -2,16 +2,16 @@
   "gp" : "basic_regression",
   "kernel" : {
     "type" : "matern32",
-    "params" : [ {"name" : "amp", "value" : 2.0, "prior" : {"name" : "gamma", "params" : [10.1,0.1] }}, 
+    "params" : [ {"name" : "amp", "value" : 20.0, "prior" : {"name" : "gamma", "params" : [0.1,0.1] }}, 
                  {"name" : "ls_1", "value" : 0.1, "prior" : {"name" : "gamma", "params" : [0.1,0.1] }}]
   },
   "noise" : {
     "type" : "standard_noise_model",
-    "params" : [{"name" : "var", "value" : 0.1, "prior" : {"name" : "gamma", "params" : [10.1,0.1] }}]
+    "params" : [{"name" : "var", "value" : 0.1, "prior" : {"name" : "gamma", "params" : [1.1,0.1] }}]
   },
   "mean" : {
     "type" : "contant_mean_model",
-    "params" : [{"name" : "mu", "value" : 1.0, "prior" : {"name" : "gaussian", "params" : [0.0,0.1] }}]
+    "params" : [{"name" : "mu", "value" : 1.0, "prior" : {"name" : "gaussian", "params" : [9.85594218,10.1] }}]
   }
 }
 

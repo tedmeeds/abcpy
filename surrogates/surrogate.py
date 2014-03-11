@@ -1,5 +1,6 @@
 class BaseSurrogate( object ):
   def __init__( self, params ):
+    self.params = params
     self.nbr_sim_calls_this_iter = 0
     self.init_with_params( params )
     

@@ -1,7 +1,9 @@
 from abcpy.problems.exponential    import ExponentialProblem   as Problem
 from abcpy.algos.model_mcmc         import abc_mcmc       
+from abcpy.algos.rejection         import abc_rejection 
 # from abcpy.states.kernel_epsilon import KernelEpsilonState as State
 from abcpy.states.synthetic_likelihood import SyntheticLikelihoodState as State
+from abcpy.states.distance_epsilon import DistanceEpsilonState as RejectState
 from abcpy.states.state_recorder       import BaseStateRecorder as Recorder
 from abcpy.kernels.gaussian import log_gaussian_kernel
 #from abcpy.metropolis_hastings_models.metropolis_hastings_model import BaseMetropolisHastingsModel as MH_Model
@@ -15,6 +17,9 @@ from progapy.viewers.view_1d import view as view_this_gp
 
 import numpy as np
 import pylab as pp
+
+
+#np.random.seed(0)
 
 # exponential distributed observations with Gamma(alpha,beta) prior over lambda
 problem_params = {}
@@ -55,23 +60,38 @@ surrogate_params["obs_statistics"]     = state_params["obs_statistics"]
 
 model_params = {}
 # adaptive-SL params
-model_params["xi"]            = 0.3
+model_params["xi"]            = 0.1
 model_params["M"]             = 100
-model_params["deltaS"]        = 20
-model_params["max_nbr_tries"] = 10
+model_params["deltaS"]        = 5
+model_params["max_nbr_tries"] = 2
 model_params["gp_json"]       = json_gp
 
+epsilon = 5.0
 nbr_samples = 1500
 #epsilon     = 0.5
-theta0 = max(np.array([1e-3]), problem.theta_prior_rand() )
+theta0 = max(np.array([1e-3]), 0*problem.theta_prior_rand() )
+
+
 print "INIT THETA = ",theta0
-theta0 *= 0
-theta0 += 0.1
+#theta0 *= 0
+#theta0 += 0.1
 state  = State( theta0, state_params )
 
 surrogate_params["run_sim_and_stats_func"] = state.run_sim_and_stats
-surrogate = Surrogate( surrogate_params )
+surrogate_params["update_rate"]   = 100
 
+rej_state = RejectState(theta0, state_params )
+thetas = abc_rejection( 20, epsilon, rej_state, recorder = None  )
+
+surrogate = Surrogate( surrogate_params )
+for theta in thetas:
+  surrogate.acquire_points( theta, \
+                            theta, 1, force_update=True )
+gp.optimize( method = "minimize", params = {"maxnumlinesearch":10} )                            
+surrogate.update()
+#pgp.add_data( )
+
+#assert False
 model_params["surrogate"]     = surrogate
 model = MH_Model( model_params)
 
