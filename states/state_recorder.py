@@ -3,7 +3,7 @@ import scipy as sp
 import pylab as pp
 
 class BaseStateRecorder( object ):
-  def __init__(self, keep_invalid = False):
+  def __init__(self, keep_invalid = False, record_stats = False):
     self.thetas          = []
     self.states          = []
     self.accepted        = []
@@ -11,8 +11,9 @@ class BaseStateRecorder( object ):
     self.sim_calls       = []
     self.nbr_sim_calls   = 0
   
-    self.statistics      = None
-    self.observations    = None
+    self.record_stats = record_stats
+    self.statistics      = []
+    self.observations    = []
     
     self.invalid_thetas   = []
     self.keep_invalid     = keep_invalid
@@ -29,31 +30,54 @@ class BaseStateRecorder( object ):
   def get_thetas( self, burnin = 0, accepted_only = False ):
     return np.array( self.thetas )[burnin:,:]
       
-  def get_statistics( self, burnin = 1):
-    if self.statistics is None:
-      self.statistics = []
-      for state in self.states:
-        self.statistics.append( state.statistcs)
-      self.statistics = np.array(self.statistics)
+  def get_statistics( self, burnin = 0):
+    self.statistics = np.array(self.statistics)
     return self.statistics
   
-  def get_sim_calls(self, burnin = 1):
+  def get_sim_calls(self, burnin = 0):
     return np.array( self.sim_calls )[burnin:]
     
   def get_acceptances(self):
     return np.array( self.accepted )
      
-  def get_states( self, burnin = 1 ):
+  def get_states( self, burnin = 0 ):
     return self.states[burnin:]
-       
+  
+  def get_invalid( self):
+    return np.array( self.invalid_thetas )
+         
   def record_state( self, state, nbr_sim_calls, accepted = True, other_state = None ):
     self.nbr_sim_calls += nbr_sim_calls
     self.accepted.append( accepted )
     self.sim_calls.append( nbr_sim_calls )
     self.thetas.append( state.theta )
+    if self.record_stats:
+      if self.statistics.__class__ == list:
+        self.statistics.append( state.stats )
+      else:
+        self.statistics = np.vstack( (self.statistics, state.stats))
     if accepted:
       self.nbr_acceptances += 1
       
   def record_invalid( self, state ):
     if self.keep_invalid:
       self.invalid_thetas.append( state.thetas )
+      
+  def save_results( self, file_root ):
+    thetas         = np.squeeze(self.get_thetas() )
+    stats          = np.squeeze(self.get_statistics())
+    acceptances    = np.squeeze(self.get_acceptances())
+    sims           = np.squeeze(self.get_sim_calls())
+    invalid_thetas = np.squeeze(self.get_invalid())
+    
+    np.savetxt( file_root + "_thetas.txt", thetas, fmt='%0.4f' )
+    if len(stats) > 0:
+      np.savetxt( file_root + "_stats.txt", stats, fmt='%0.4f' )
+    else:
+      print "recorder : no stats to save"
+    np.savetxt( file_root + "_acceptances.txt", acceptances, fmt='%d' )
+    np.savetxt( file_root + "_sims.txt", sims, fmt='%d' )
+    if len(invalid_thetas) > 0:
+      np.savetxt( file_root + "_invalid_thetas.txt", invalid_thetas, fmt='%0.4f' )
+    else:
+      print "recorder : no invalid thetas to save"

@@ -34,7 +34,7 @@ problem = Problem( problem_params, force_init = True )
 
 # since we are running abc_rejection, use a distance epsilon state
 state_params = {}
-state_params["S"]                          = 2
+state_params["S"]                          = 1
 state_params["obs_statistics"]             = problem.get_obs_statistics()
 state_params["theta_prior_rand_func"]      = problem.theta_prior_rand
 state_params["theta_prior_logpdf_func"]    = problem.theta_prior_logpdf
@@ -56,18 +56,18 @@ surrogate_params = {}
 surrogate_params["gp"] = pgp
 surrogate_params["obs_statistics"]     = state_params["obs_statistics"]
 
-
+# for xi=0.2, n_reject = 100. deltaS = 5. max tries 10, update rate 10
 
 model_params = {}
 # adaptive-SL params
-model_params["xi"]            = 0.1
+model_params["xi"]            = 0.05
 model_params["M"]             = 100
 model_params["deltaS"]        = 5
-model_params["max_nbr_tries"] = 2
+model_params["max_nbr_tries"] = 10
 model_params["gp_json"]       = json_gp
 
 epsilon = 5.0
-nbr_samples = 1500
+nbr_samples = 15000
 #epsilon     = 0.5
 theta0 = max(np.array([1e-3]), 0*problem.theta_prior_rand() )
 
@@ -75,27 +75,34 @@ theta0 = max(np.array([1e-3]), 0*problem.theta_prior_rand() )
 print "INIT THETA = ",theta0
 #theta0 *= 0
 #theta0 += 0.1
+rej_state_params = state_params.copy()
+rej_state_params["S"] = 1
+rej_state = RejectState(theta0, rej_state_params )
+
+recorder = Recorder(record_stats=True)
+n_reject = 100
+thetas = abc_rejection( n_reject, epsilon, rej_state, recorder = recorder  )
+theta0 = thetas[-1]
 state  = State( theta0, state_params )
 
 surrogate_params["run_sim_and_stats_func"] = state.run_sim_and_stats
 surrogate_params["update_rate"]   = 100
 
-rej_state = RejectState(theta0, state_params )
-thetas = abc_rejection( 20, epsilon, rej_state, recorder = None  )
-
+#assert False
 surrogate = Surrogate( surrogate_params )
-for theta in thetas:
-  surrogate.acquire_points( theta, \
-                            theta, 1, force_update=True )
+surrogate_params["gp"].init_with_this_data( thetas.reshape( (n_reject,1)), recorder.get_statistics().reshape( (n_reject,1)))
+# for theta in thetas:
+#   surrogate.acquire_points( theta, \
+#                      recorder.statistics=[]
 gp.optimize( method = "minimize", params = {"maxnumlinesearch":10} )                            
 surrogate.update()
 #pgp.add_data( )
-
+#surrogate_params["gp"].add_data( thetas.reshape( (n_reject,1)), recorder.get_statistics().reshape( (n_reject,1)))
 #assert False
 model_params["surrogate"]     = surrogate
 model = MH_Model( model_params)
 
-recorder = Recorder()
+recorder.statistics=[]
 recorder.record_state( state, state.nbr_sim_calls, accepted=True )
 
 model.set_current_state( state )

@@ -21,6 +21,7 @@ class GaussianProcessSurrogate(BaseSurrogate):
     if self.since_last_update >= self.update_rate or force_update is True:
       self.update()
       self.since_last_update = 0
+      self.update_rate *= 2
       
     D = len(to_theta)
     
@@ -69,16 +70,25 @@ class GaussianProcessSurrogate(BaseSurrogate):
         
   def acquire_points( self, to_theta, from_theta, M, force_update = False ):
     print "Acquiring %d points"%(M)
+    dif_vector = to_theta-from_theta
+    a = np.random.rand()
+    at_vector = from_theta + a*dif_vector
+    all_thetas = []
+    all_stats  = []
+    nstats = len(self.obs_statistics)
     for m in range(M):
-      if np.random.rand() < 0.5:
-        thetas, sim_outs, stats = self.run_sim_and_stats( to_theta, 1 )
-      else:
-        thetas, sim_outs, stats = self.run_sim_and_stats( from_theta, 1 )
+      thetas, sim_outs, stats = self.run_sim_and_stats( at_vector, 1 )
+      all_thetas.append(at_vector)
+      all_stats.append( np.squeeze(stats) )
+      # if np.random.rand() < 0.5:
+#         thetas, sim_outs, stats = self.run_sim_and_stats( to_theta, 1 )
+#       else:
+#         thetas, sim_outs, stats = self.run_sim_and_stats( from_theta, 1 )
       self.nbr_sim_calls_this_iter += 1
       self.since_last_update += 1
       #print "N before: ", self.gp.N
-      self.gp.add_data( thetas, stats )  
-      print "   gp now has N: ", self.gp.N
+    self.gp.add_data( np.array(all_thetas), np.array(all_stats).reshape((len(all_stats),nstats)) )  
+    print "   gp now has N: ", self.gp.N
       
       
    

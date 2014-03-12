@@ -146,7 +146,7 @@ class ExponentialProblem( BaseProblem ):
     time_ids = []
     nbr_sims = []
     
-    for time_id in [1,5,10,50,100,500,1000,2000,5000,10000,15000,20000,30000,40000,50000]:
+    for time_id in [1,5,10,25,50,75,100,200,300,400,500,750,1000,1500,2000,3000,4000,5000,7500,10000,12500,15000,17500,20000,25000,30000,35000,40000,45000,50000]:
       if time_id <= len(thetas):
         errs.append( bin_errors_1d(self.coarse_theta_range, self.posterior_cdf_bins, thetas[:time_id]) )
         time_ids.append(time_id)

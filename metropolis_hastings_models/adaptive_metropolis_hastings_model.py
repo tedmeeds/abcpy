@@ -80,6 +80,9 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
       self.log_accs[I] = 0
       self.accs     = np.exp(self.log_accs)
       self.error = self.metropolis_hastings_error( self.accs, u )
+      
+      if nbr_tries == 0:
+        was_error = self.error
       # print "  from ", self.proposed.theta
       # print "  to ", self.current.theta
       # print "  has error = ",self.error
@@ -87,7 +90,7 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
       
       if nbr_tries < self.max_nbr_tries:
         if self.error > self.xi:
-          was_error = self.error
+          
           print "\t",nbr_tries, self.median, "  ","error > xi: ",self.error, self.describe_states()
           self.acquire_points()
           nbr_tries += 1
