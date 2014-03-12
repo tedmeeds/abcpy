@@ -6,19 +6,9 @@ import scipy
 from scipy import special
 from scipy import stats
 from scipy import integrate
+
+from scipy.special import gammaln
 import pdb
-
-sqrt2 = np.sqrt( 2.0 )
-sqrt_2pi = np.sqrt( 2.0 * np.pi )
-log_sqrt_2pi = np.sqrt(sqrt_2pi)
-import numpy as np
-import scipy as sp
-import pylab as pp
-
-import scipy
-from scipy import special
-from scipy import stats
-from scipy import integrate
 
 sqrt2 = np.sqrt( 2.0 )
 sqrt_2pi = np.sqrt( 2.0 * np.pi )
@@ -1236,6 +1226,11 @@ def lognormal_lower_trunc( mu, sigma, b ):
   trunc[J] = np.exp( mu[J] + sigma[J]*sigma[J]/2.0)
   return trunc
   
+def poisson_rand( mu, N = 1 ):
+  return np.random.poisson(mu,N)
+  
+def poisson_logpdf( x, mu ):
+  return (x-1)*np.log(mu)- gammaln(x-1) - mu
   
 def bin_errors_1d( bins, true_centered_probability, samples ):
   N = len(samples)
