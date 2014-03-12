@@ -53,8 +53,9 @@ class KernelEpsilonState( BaseState ):
     self.stats          = []
     for s in range(self.S):
       # simulation -> outputs -> statistics -> loglikelihood
-      self.sim_outs.append( self.simulation_function( self.theta ) ); self.add_sim_call()
-      self.stats.append( self.statistics_function( self.sim_outs[-1] ) )
+      # self.sim_outs.append( self.simulation_function( self.theta ) ); self.add_sim_call()
+      self.sim_outs = self.simulation_function( self.theta ); self.add_sim_call()
+      self.stats.append( self.statistics_function( self.sim_outs ) )
       self.loglikelihoods[s] = self.log_kernel_func( self.stats[-1], self.obs_statistics, self.epsilon )
     self.stats      = np.array(self.stats)
     self.statistics = np.mean( self.stats, 0 )

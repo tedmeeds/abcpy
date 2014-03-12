@@ -34,12 +34,12 @@ state_params["theta_proposal_logpdf_func"] = problem.theta_proposal_logpdf
 state_params["simulation_function"]        = problem.simulation_function
 state_params["statistics_function"]        = problem.statistics_function
 state_params["log_kernel_func"]            = log_gaussian_kernel
-state_params["is_marginal"]                = True
+state_params["is_marginal"]                = False
 
 
 theta0 = problem.theta_prior_rand()
 
-S = 2
+S = 10
 state_params["S"]  = S
 nbr_samples  = 50000
 #epsilons     = [5.0,2.0,1.0]
