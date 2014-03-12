@@ -7,13 +7,44 @@ import pylab as pp
 
 import pdb
 
+def default_params():
+  mu_log_P         = 2.0
+  std_log_P        = 2.0
+  mu_log_delta     = -1.0
+  std_log_delta    = 2.0
+  mu_log_N0        = 5.0
+  std_log_N0       = 2.0
+  mu_log_sigma_d   = 0.0
+  std_log_sigma_d  = 2.0
+  mu_log_sigma_p   = 0.0
+  std_log_sigma_p  = 2.0
+  mu_tau           = 15
+  q_factor         = 0.01
+
+  params = {}
+  params["blowfly_filename"] = "./problems/blowfly/blowfly.txt"
+  params["mu_log_P"]         = mu_log_P
+  params["std_log_P"]        = std_log_P
+  params["mu_log_delta"]     = mu_log_delta
+  params["std_log_delta"]    = std_log_delta
+  params["mu_log_N0"]        = mu_log_N0     
+  params["std_log_N0"]       = std_log_N0
+  params["mu_log_sigma_d"]   = mu_log_sigma_d
+  params["std_log_sigma_d"]  = std_log_sigma_d
+  params["mu_log_sigma_p"]   = mu_log_sigma_p
+  params["std_log_sigma_p"]  = std_log_sigma_p
+  params["mu_tau"]           = mu_tau
+  params["q_factor"]         = q_factor
+  
+  return params
+  
 class BlowflyProblem( BaseProblem ):
   # extract info about specific for this problem
   def load_params( self, params ):
     # which blowfly data are we using
     self.blowfly_filename = params["blowfly_filename"]
     self.theta_names = ["log_P","log_delta","log_N0","log_sigma_d","log_sigma_p","tau"]
-
+    self.stats_names = ["mean","s0-median","peaks","log max"]
     # each parameter except for tau is in log-space, and it has a gaussian prior
     self.mu_log_P         = params["mu_log_P"]
     self.std_log_P        = params["std_log_P"]
@@ -233,6 +264,19 @@ class BlowflyProblem( BaseProblem ):
     stats  = states_object.get_statistics(burnin=burnin)
     nsims  = states_object.get_sim_calls(burnin=burnin)
     
+    f=pp.figure()
+    for i in range(6):
+      f.add_subplot(2,6,i+1)
+      pp.hist( thetas[:,i], 10, normed=True, alpha = 0.5)
+      pp.title( self.theta_names[i])
+    for i in range(4):
+      f.add_subplot(2,6,6+1+i+1)
+      pp.hist( stats[:,i], 10, normed=True, alpha = 0.5)
+      ax=pp.axis()
+      pp.vlines( self.obs_statistics[i], 0, ax[3], color="r", linewidths=2)
+      pp.axis(ax)
+      pp.title( self.stats_names[i])
+      
 if __name__ == "__main__":
   pp.close("all")
   N0      = 450.0 #3721.0 #np.exp(6.0)
@@ -250,33 +294,7 @@ if __name__ == "__main__":
  #  P       = 2.25 #np.exp(2.0)
  #  delta   = 0.24# np.exp(-1.8)
   
-  mu_log_P         = 2.0
-  std_log_P        = 2.0
-  mu_log_delta     = -1.0
-  std_log_delta    = 2.0
-  mu_log_N0        = 5.0
-  std_log_N0       = 2.0
-  mu_log_sigma_d   = 0.0
-  std_log_sigma_d  = 2.0
-  mu_log_sigma_p   = 0.0
-  std_log_sigma_p  = 2.0
-  mu_tau           = 15
-  q_factor         = 0.01
-
-  params = {}
-  params["blowfly_filename"] = "./problems/blowfly/blowfly.txt"
-  params["mu_log_P"]         = mu_log_P
-  params["std_log_P"]        = std_log_P
-  params["mu_log_delta"]     = mu_log_delta
-  params["std_log_delta"]    = std_log_delta
-  params["mu_log_N0"]        = mu_log_N0     
-  params["std_log_N0"]       = std_log_N0
-  params["mu_log_sigma_d"]   = mu_log_sigma_d
-  params["std_log_sigma_d"]  = std_log_sigma_d
-  params["mu_log_sigma_p"]   = mu_log_sigma_p
-  params["std_log_sigma_p"]  = std_log_sigma_p
-  params["mu_tau"]           = mu_tau
-  params["q_factor"]         = q_factor
+  params = default_params()
   
   theta = np.zeros(6)
   theta[0] = np.log(P)
