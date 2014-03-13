@@ -44,7 +44,7 @@ class BlowflyProblem( BaseProblem ):
     # which blowfly data are we using
     self.blowfly_filename = params["blowfly_filename"]
     self.theta_names = ["log_P","log_delta","log_N0","log_sigma_d","log_sigma_p","tau"]
-    self.stats_names = ["mean","s0-median","peaks","log max"]
+    self.stats_names = ["log mean","log(mean-median)","peaks","log max"]
     # each parameter except for tau is in log-space, and it has a gaussian prior
     self.mu_log_P         = params["mu_log_P"]
     self.std_log_P        = params["std_log_P"]
@@ -130,13 +130,35 @@ class BlowflyProblem( BaseProblem ):
 
   # pass outputs through statistics function, return statistics
   def statistics_function( self, outputs ):
-    nstats = 4
+    nstats = 6
+    N = len(outputs)
+    
+    sorted_dif = np.sort( np.diff(outputs))
+    sorted = np.sort(outputs)
+    q14 = np.mean( sorted[:N/4]) 
+    q24 = np.mean( sorted[N/4:N/2])
+    q2 = np.mean( sorted[N/4:3*N/4])
+    q34 = np.mean( sorted[N/2:3*N/4]) 
+    q44 = np.mean( sorted[3*N/4:]) 
     s = np.zeros( nstats, dtype = float )
-    s[0] = outputs.mean() / 1000.0
-    s[1] = (s[0] - np.median(outputs))/ 1000.0
+    s[0] = np.log(q14)  #np.log(q1)
+    s[1] = np.log(q44) #np.log(q24) #np.log(q2)
+    s[2] = np.log(q34)
+    s[3] = np.log(q44)
+    #s[2] = np.log(q4)
+    #s[2] = np.mean( sorted_dif[:N/4] )
+    #s[3] = np.mean( sorted_dif[N/4:] )
+    #s[1] = np.mean( sorted_dif[N/4:3*N/4] )
+    #s[0] = np.log( outputs.mean() / 1000.0 )
+    #s[1] = np.log( np.abs( (s[0] - np.median(outputs))/ 1000.0 ) )
+    mx,mn = peakdet(outputs/outputs.std(), 0.5 )
+    s[4] = float(len(mx))
     mx,mn = peakdet(outputs/outputs.std(), 1.5 )
-    s[2] = float(len(mx))
-    s[3] = np.log(np.max(outputs+1)/1000.0)
+    s[5] = float(len(mn))
+    
+    #s[4] = np.mean( sorted_dif[:N/4] )
+    #s[5] = np.mean( sorted_dif[N/4:] )
+    #s[3] = np.log(np.max(outputs+1)/1000.0)
     return s
     # def blowstats( N ):
     #       maxlags = 11
@@ -235,19 +257,18 @@ class BlowflyProblem( BaseProblem ):
   def theta_proposal_logpdf( self, to_theta, from_theta ):
     log_p = 0.0
     
-    log_p += gaussian_log_pdf( to_theta[0], from_theta[0], self.q_factor*self.std_log_P )
-    log_p += gaussian_log_pdf( to_theta[1], from_theta[1], self.q_factor*self.std_log_delta )
-    log_p += gaussian_log_pdf( to_theta[2], from_theta[2], self.q_factor*self.std_log_N0 )
-    log_p += gaussian_log_pdf( to_theta[3], from_theta[3], self.q_factor*self.std_log_sigma_d )
-    log_p += gaussian_log_pdf( to_theta[4], from_theta[4], self.q_factor*self.std_log_sigma_p )
+    log_p += gaussian_logpdf( to_theta[0], from_theta[0], self.q_factor*self.std_log_P )
+    log_p += gaussian_logpdf( to_theta[1], from_theta[1], self.q_factor*self.std_log_delta )
+    log_p += gaussian_logpdf( to_theta[2], from_theta[2], self.q_factor*self.std_log_N0 )
+    log_p += gaussian_logpdf( to_theta[3], from_theta[3], self.q_factor*self.std_log_sigma_d )
+    log_p += gaussian_logpdf( to_theta[4], from_theta[4], self.q_factor*self.std_log_sigma_p )
     
-    delta_tau = np.abs(from_tau - to_tau)
+    delta_tau = np.abs(from_theta[5] - to_theta[5])
     if delta_tau > 0:
       log_p += np.log(0.25)
     else:
       log_p += np.log(0.5)
       
-    log_p += poisson_log_pdf(  theta[5], self.mu_tau )
     return log_p
       
   # take samples/staistics etc and "view" this particular problem
@@ -266,16 +287,42 @@ class BlowflyProblem( BaseProblem ):
     
     f=pp.figure()
     for i in range(6):
-      f.add_subplot(2,6,i+1)
+      sp=f.add_subplot(2,6,i+1)
       pp.hist( thetas[:,i], 10, normed=True, alpha = 0.5)
       pp.title( self.theta_names[i])
+      set_label_fonsize( sp, 6 )
+      set_tick_fonsize( sp, 6 )
+      set_title_fonsize( sp, 8 )
     for i in range(4):
-      f.add_subplot(2,6,6+1+i+1)
+      sp=f.add_subplot(2,6,6+1+i+1)
       pp.hist( stats[:,i], 10, normed=True, alpha = 0.5)
       ax=pp.axis()
       pp.vlines( self.obs_statistics[i], 0, ax[3], color="r", linewidths=2)
-      pp.axis(ax)
+      # if self.obs_statistics[i] < ax[0]:
+      #   ax[0] = self.obs_statistics[i]
+      # elif self.obs_statistics[i] > ax[1]:
+      #   ax[1] = self.obs_statistics[i]
+      pp.axis( [ min(ax[0],self.obs_statistics[i]), max(ax[1],self.obs_statistics[i]), ax[2],ax[3]] )
       pp.title( self.stats_names[i])
+      set_label_fonsize( sp, 6 )
+      set_tick_fonsize( sp, 6 )
+      set_title_fonsize( sp, 8 )
+    
+    f = pp.figure()  
+    I = np.random.permutation( len(thetas) )
+    for i in range(16):
+      sp=pp.subplot(4,4,i+1)
+      theta = thetas[ I[i],:]
+      test_obs = self.simulation_function( theta )
+      test_stats = self.statistics_function( test_obs )
+      err = np.sum( np.abs( self.obs_statistics - test_stats ) )
+      pp.title( "%0.2f"%( err ))
+      pp.plot( self.observations/1000.0 )
+      pp.plot(test_obs/1000.0)
+      pp.axis("off")
+      set_label_fonsize( sp, 6 )
+      set_tick_fonsize( sp, 6 )
+      set_title_fonsize( sp, 8 )
       
 if __name__ == "__main__":
   pp.close("all")
@@ -327,11 +374,14 @@ if __name__ == "__main__":
     pp.title( "%0.2f"%( err ))
     pp.plot( b.observations/1000.0 )
     pp.plot(test_obs/1000.0)
+    set_label_fonsize( sp, 6 )
+    set_tick_fonsize( sp, 6 )
+    set_title_fonsize( sp, 8 )
     pp.axis("off")
   pp.figure(3)
   theta = min_theta
   for i in range(16):
-    pp.subplot(4,4,i+1)
+    sp=pp.subplot(4,4,i+1)
     
     test_obs = b.simulation_function( theta )
     test_stats = b.statistics_function( test_obs )
@@ -341,5 +391,8 @@ if __name__ == "__main__":
     pp.plot( b.observations/1000.0 )
     pp.plot(test_obs/1000.0)
     pp.axis("off")
+    set_label_fonsize( sp, 6 )
+    set_tick_fonsize( sp, 6 )
+    set_title_fonsize( sp, 8 )
   pp.show()
   

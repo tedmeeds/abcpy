@@ -6,7 +6,7 @@ import scipy
 from scipy import special
 from scipy import stats
 from scipy import integrate
-
+from scipy.stats import chi2
 from scipy.special import gammaln
 import pdb
 
@@ -119,17 +119,34 @@ def fast_grad_distance(ls, x1, x2=None):
 
     return gX
     
+    
 def inv_wishart_rnd( nu, S ):
-  return sp.linalg.pinv2( wishart_rnd( nu, S ))
+  return np.linalg.inv( wishart_rnd( nu, np.linalg.inv(S) ))
   
-def wishart_rnd( nu, S ):
-  cholesky = np.linalg.cholesky(S)
-  d = S.shape[0]
-  a = np.zeros((d,d),dtype=np.float32)
-  for r in xrange(d):
-    if r!=0: a[r,:r] = np.random.normal(size=(r,))
-    a[r,r] = np.sqrt(gamma_rnd(0.5*(nu-d+1),2.0))
-  return np.dot(np.dot(np.dot(cholesky,a),a.T),cholesky.T)
+def wishart_rnd( nu, S, chol = None ):
+
+  dim = S.shape[0]
+  if chol is None:
+    chol = np.linalg.cholesky(S)
+  #nu = nu+dim - 1
+  #nu = nu + 1 - np.arange(1,dim+1)
+  a = np.zeros((dim,dim))
+  
+  for i in range(dim):
+      for j in range(i+1):
+          if i == j:
+              a[i,j] = np.sqrt(chi2.rvs(nu-(i+1)+1))
+          else:
+              a[i,j]  = np.random.normal(0,1)
+  return np.dot(chol, np.dot(a, np.dot(a.T, chol.T)))
+  
+  # cholesky = np.linalg.cholesky(S)
+  # d = S.shape[0]
+  # a = np.zeros((d,d),dtype=np.float32)
+  # for r in xrange(d):
+  #   if r!=0: a[r,:r] = np.random.normal(size=(r,))
+  #   a[r,r] = np.sqrt(gamma_rnd(0.5*(nu-d+1),2.0))
+  # return np.dot(np.dot(np.dot(cholesky,a),a.T),cholesky.T)
     
 def campbell_method( X ):
   N,D = X.shape # D = v in campbell

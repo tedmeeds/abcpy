@@ -29,22 +29,29 @@ class SyntheticLikelihoodState( BaseState ):
     self.theta_proposal_rand_func   = params["theta_proposal_rand_func"]
     self.theta_proposal_logpdf_func = params["theta_proposal_logpdf_func"]
     
+    self.zero_out_cross_stats_terms = False
+    if params.has_key("zero_cross_terms"):
+      self.zero_out_cross_stats_terms = params["zero_cross_terms"]
+    
     # observations, simulator, statistic functions
     self.obs_statistics        = params["obs_statistics"]
     self.simulation_function   = params["simulation_function"]
     self.statistics_function   = params["statistics_function"]
-    
-    self.hierarchy             = "just_gaussian"
+    self.nbr_stats             = len(self.obs_statistics)
+    self.hierarchy             = params["hierarchy_type"] #"just_gaussian"
     if params.has_key("hierarchy_type"):
       self.hierarchy = params["hierarchy_type"]
       
     # kernel and its epsilon
     self.epsilon          = params["epsilon"]
+    self.jitter           = 1e-6*np.eye( self.nbr_stats )
     
     # params specific to loglikelihood ans state updates
     self.S                = params["S"]
     self.is_marginal      = params["is_marginal"]
-    
+      
+    if self.hierarchy == "jeffreys":
+      assert self.S > self.nbr_stats, "we need at  S > nbr stats for wishart samples"
     # 
     self.loglik           = None
   
@@ -88,9 +95,17 @@ class SyntheticLikelihoodState( BaseState ):
     self.n_stats      = len(self.stats)
     dif = self.stats - self.mu_stats
     self.sum_sq_stats = np.dot( dif.T, dif )
-    #self.cov_stats    = np.cov( self.stats.T, ddof = self.n_stats-1 )
+    
+    if self.zero_out_cross_stats_terms:
+      s = np.diag(self.sum_sq_stats)
+      self.sum_sq_stats = np.diag(s)
+    self.sum_sq_stats += self.jitter
+      
     self.cov_stats    = self.sum_sq_stats / (self.n_stats-1 )
     self.cov_mu_stats = self.cov_stats / self.n_stats
+    
+    #print self.mu_stats, self.cov_stats 
+          
     
   def model_parameters(self):
     #self.precomputes()
@@ -102,20 +117,32 @@ class SyntheticLikelihoodState( BaseState ):
       
     logliks = np.zeros(M)
     stats = self.obs_statistics
-    std_stats = self.epsilon+np.sqrt(self.cov_stats)
-    std_mu_stats = np.sqrt(self.cov_mu_stats)
+    #std_stats = self.epsilon+np.sqrt(self.cov_stats)
+    #std_mu_stats = np.sqrt(self.cov_mu_stats)
+    cov_stats = self.cov_stats
     for m in xrange(M):
       if self.hierarchy == "jeffreys":
-        cov_stats = wishart_rnd( self.n_stats-1, self.sum_sq_stats )
-        std_stats = self.epsilon+np.sqrt(cov_stats)
-        std_mu_stats = np.sqrt(cov_stats/self.n_stats)
-        mu_stats = self.mu_stats + std_mu_stats*np.random.randn()
+        cov_stats = inv_wishart_rnd( self.n_stats-1, self.sum_sq_stats )
+        #std_mu_stats = np.sqrt(cov_stats/self.n_stats)
+        cov_mu_stats = cov_stats/self.n_stats
+        #if m < 3:
+        #  print self.cov_stats, cov_stats 
+        #mu_stats = self.mu_stats + std_mu_stats*np.random.randn()
+        mu_stats = np.random.multivariate_normal( self.mu_stats, cov_mu_stats )
       elif self.hierarchy == "just_gaussian":
-        mu_stats = self.mu_stats + std_mu_stats*np.random.randn()
+        mu_stats = np.random.multivariate_normal( self.mu_stats, self.cov_mu_stats )
+        #mu_stats = self.mu_stats + std_mu_stats*np.random.randn()
       else:
         assert False, "no other type yet"
-      logliks[m] = self.loglikelihood_under_model(stats, mu_stats, std_stats)
+        
+      if self.nbr_stats == 1:
+        logliks[m] = self.loglikelihood_under_model(stats, mu_stats, self.epsilon+np.sqrt(cov_stats) )
+      else:
+        logliks[m] = self.mv_loglikelihood_under_model( stats, mu_stats, pow(self.epsilon,2)*np.eye(self.nbr_stats)+cov_stats )
     return logliks
+  
+  def mv_loglikelihood_under_model( self, stats, mu_stats, cov_stats ):
+    return log_pdf_full_mvn( stats, mu_stats, cov_stats )
     
   def loglikelihood_under_model(self, stats, mu_stats, std_stats ): 
     return np.squeeze(gaussian_logpdf( stats, mu_stats, std_stats ))
@@ -124,7 +151,11 @@ class SyntheticLikelihoodState( BaseState ):
     if len(self.stats) == 0:
       self.acquire( self.S )
       #self.update_model()
-      self.loglik = self.loglikelihood_under_model( self.obs_statistics, self.mu_stats, self.epsilon+np.sqrt(self.cov_stats) )
+      #pdb.set_trace()
+      if self.nbr_stats == 1:
+        self.loglik = self.loglikelihood_under_model( self.obs_statistics, self.mu_stats, self.epsilon+np.sqrt(self.cov_stats) )
+      else:
+        self.loglik = self.mv_loglikelihood_under_model( self.obs_statistics, self.mu_stats, pow(self.epsilon,2)*np.eye(self.nbr_stats)+self.cov_stats )
 
     return self.loglik
     

@@ -1,23 +1,18 @@
 from abcpy.problems.exponential    import ExponentialProblem   as Problem
+from abcpy.problems.exponential     import default_params     as load_default_params
 from abcpy.algos.model_mcmc         import abc_mcmc       
 # from abcpy.states.kernel_epsilon import KernelEpsilonState as State
 from abcpy.states.synthetic_likelihood import SyntheticLikelihoodState as State
 from abcpy.states.state_recorder       import BaseStateRecorder as Recorder
 from abcpy.kernels.gaussian import log_gaussian_kernel
-#from abcpy.models.metropolis_hastings_model import BaseMetropolisHastingsModel as Model
-from abcpy.models.adaptive_metropolis_hastings_model import AdaptiveMetropolisHastingsModel as Model
+#from abcpy.metropolis_hastings_models.metropolis_hastings_model import BaseMetropolisHastingsModel as Model
+from abcpy.metropolis_hastings_models.adaptive_metropolis_hastings_model import AdaptiveMetropolisHastingsModel as Model
 
 import numpy as np
 import pylab as pp
 
 # exponential distributed observations with Gamma(alpha,beta) prior over lambda
-problem_params = {}
-problem_params["alpha"]           = 0.1
-problem_params["beta"]            = 0.1
-problem_params["theta_star"]      = 0.1
-problem_params["N"]               = 500  # how many observations we draw per simulation
-problem_params["seed"]            = 0
-problem_params["q_stddev"]        = 0.01
+problem_params = load_default_params()
 problem = Problem( problem_params, force_init = True )
 
 

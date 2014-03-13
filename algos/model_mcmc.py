@@ -2,7 +2,7 @@ import numpy as np
 import pylab as pp
 
   
-def abc_mcmc( nbr_samples, model ):
+def abc_mcmc( nbr_samples, model, verbose = False ):
   #assert state is not None, "need to start with a state"
   
   # init with current state's theta
@@ -18,7 +18,8 @@ def abc_mcmc( nbr_samples, model ):
   sim_calls       = [model.current.nbr_sim_calls]
   nbr_accepts     = 1
   for n in xrange(nbr_samples):
-    print "T = ", n+1, " of ",nbr_samples
+    if verbose:
+      print "T = ", n+1, " of ",nbr_samples
     model.reset_nbr_sim_calls_this_iter()
     this_iters_sim_calls = 0
     
@@ -57,6 +58,7 @@ def abc_mcmc( nbr_samples, model ):
     else:
       model.stay_in_current_state()
 
+    
     # keep track of all states in chain
     #if all_states is not None:
     #  all_states.add( state, this_iters_sim_calls, accepted )

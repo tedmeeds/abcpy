@@ -7,6 +7,17 @@ import pylab as pp
 
 import pdb
 
+def default_params():
+  params = {}
+  params["alpha"]           = 0.1
+  params["beta"]            = 0.1
+  params["theta_star"]      = 0.1
+  params["N"]               = 500  # how many observations we draw per simulation
+  params["seed"]            = 0
+  params["q_stddev"]        = 0.01
+  
+  return params
+
 class ExponentialProblem( BaseProblem ):
   # extract info about specific for this problem
   def load_params( self, params ):

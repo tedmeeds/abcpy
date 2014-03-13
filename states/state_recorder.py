@@ -28,11 +28,14 @@ class BaseStateRecorder( object ):
     return float( self.nbr_acceptances ) / float( self.nbr_sim_calls )
     
   def get_thetas( self, burnin = 0, accepted_only = False ):
-    return np.squeeze(np.array( self.thetas ))[burnin:,:]
+    return np.squeeze(np.array( self.thetas ))[burnin:]
       
   def get_statistics( self, burnin = 0):
     self.statistics = np.squeeze(np.array(self.statistics))
-    return self.statistics[burnin:,:]
+    if len(self.statistics)>0:
+      return self.statistics[burnin:]
+    else:
+      return self.statistics
   
   def get_sim_calls(self, burnin = 0):
     return np.array( self.sim_calls )[burnin:]
@@ -52,8 +55,9 @@ class BaseStateRecorder( object ):
     self.sim_calls.append( nbr_sim_calls )
     self.thetas.append( state.theta )
     if self.record_stats:
-      if self.statistics.__class__ == list:
-        self.statistics.append( state.stats )
+      if len(self.statistics) == 0 :
+        #self.statistics.append( state.stats )
+        self.statistics = np.array( state.stats )
       else:
         self.statistics = np.vstack( (self.statistics, state.stats))
     if accepted:

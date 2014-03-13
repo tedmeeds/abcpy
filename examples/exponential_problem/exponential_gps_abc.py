@@ -1,4 +1,5 @@
 from abcpy.problems.exponential    import ExponentialProblem   as Problem
+from abcpy.problems.exponential     import default_params     as load_default_params
 from abcpy.algos.model_mcmc         import abc_mcmc       
 from abcpy.algos.rejection         import abc_rejection 
 # from abcpy.states.kernel_epsilon import KernelEpsilonState as State
@@ -22,13 +23,7 @@ import pylab as pp
 #np.random.seed(0)
 
 # exponential distributed observations with Gamma(alpha,beta) prior over lambda
-problem_params = {}
-problem_params["alpha"]           = 0.1
-problem_params["beta"]            = 0.1
-problem_params["theta_star"]      = 0.1
-problem_params["N"]               = 500  # how many observations we draw per simulation
-problem_params["seed"]            = 0
-problem_params["q_stddev"]        = 0.01
+problem_params = load_default_params()
 problem = Problem( problem_params, force_init = True )
 
 

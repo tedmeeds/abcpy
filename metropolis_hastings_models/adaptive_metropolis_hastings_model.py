@@ -59,7 +59,7 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
     # this quantity is constant, the log-likelihood varies
     return q_logprior - theta_logprior + q_to_theta_logproposal - theta_to_q_logproposal
  
-  def loglik_differences_rand( M ):   
+  def loglik_differences_rand( self, M ):   
       proposed_logliks = self.proposed.loglikelihood_rand( M )
       current_logliks  = self.current.loglikelihood_rand( M )
       return proposed_logliks-current_logliks
@@ -95,8 +95,8 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
           self.acquire_points()
           nbr_tries += 1
     
-    if nbr_tries > 0:    
-      print "\t",nbr_tries, "median = ", self.median, "  ","error from: ",was_error, " to ", self.error, self.describe_states()
+    #if nbr_tries > 0:    
+    print "\t",nbr_tries, "median = ", self.median, "  ","error from: ",was_error, " to ", self.error, self.describe_states()
     # Metropolis-Hastings acceptance log-probability and probability
     if self.median > 0:
       return np.log( self.median )
