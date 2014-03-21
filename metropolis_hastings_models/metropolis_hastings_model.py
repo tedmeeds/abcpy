@@ -1,4 +1,4 @@
-
+import pdb
 
 class BaseMetropolisHastingsModel( object ):
   def __init__( self, params ):
@@ -42,6 +42,7 @@ class BaseMetropolisHastingsModel( object ):
     self.proposed = proposed_state
     
   def set_current_state( self, current_state ):
+    #pdb.set_trace()
     self.current = current_state
   
   def update_current( self ):
@@ -49,16 +50,25 @@ class BaseMetropolisHastingsModel( object ):
     if self.current.is_marginal:
       state = self.current.new( self.current.theta, self.current.params )  
       self.set_current_state( state )
+    else:
+      self.current.reset_nbr_sim_calls_this_iter()
    
   def stay_in_current_state( self ):
+    #print "staying in current", self.get_nbr_sim_calls_this_iter()
     if self.recorder is not None:
       self.recorder.record_state( self.current, self.get_nbr_sim_calls_this_iter(), accepted = False )   
       
   def move_to_proposed_state( self ):
+    #pdb.set_trace()
+    n = self.get_nbr_sim_calls_this_iter()
     self.set_current_state( self.proposed )
+    #print "moving to proposed",self.get_nbr_sim_calls_this_iter()
     if self.recorder is not None:
-      self.recorder.record_state( self.current, self.get_nbr_sim_calls_this_iter(), accepted = True ) 
-    
+      self.recorder.record_state( self.current, n, accepted = True ) 
+  
+  def log_posterior(self):
+    return self.current.loglikelihood() + self.current.logprior()
+      
   def log_acceptance( self ):
     q_state = self.proposed
     state   = self.current

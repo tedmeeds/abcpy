@@ -1,6 +1,7 @@
 from abcpy.metropolis_hastings_models.metropolis_hastings_model import BaseMetropolisHastingsModel
 import numpy as np
 import pylab as pp
+import pdb
 
 def conditional_metropolis_hastings_error( alphas, tau, u ):
   # alphas:  random samples of acceptance probabiltiies
@@ -39,6 +40,7 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
     self.M             = params["M"]
     self.deltaS        = params["deltaS"]
     self.max_nbr_tries = params["max_nbr_tries"] 
+    self.errors        = []
     
   def metropolis_hastings_error( self, acceptance_values,  u = None ):
     self.median = np.median( acceptance_values )
@@ -81,6 +83,7 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
       self.accs     = np.exp(self.log_accs)
       self.error = self.metropolis_hastings_error( self.accs, u )
       
+      #pdb.set_trace()
       if nbr_tries == 0:
         was_error = self.error
       # print "  from ", self.proposed.theta
@@ -95,8 +98,9 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
           self.acquire_points()
           nbr_tries += 1
     
-    #if nbr_tries > 0:    
-    print "\t",nbr_tries, "median = ", self.median, "  ","error from: ",was_error, " to ", self.error, self.describe_states()
+    self.errors.append( self.error )
+    if nbr_tries > 0:    
+      print "\t",nbr_tries, "median = ", self.median, "  ","error from: ",was_error, " to ", self.error, self.describe_states()
     # Metropolis-Hastings acceptance log-probability and probability
     if self.median > 0:
       return np.log( self.median )

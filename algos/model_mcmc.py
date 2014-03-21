@@ -8,7 +8,7 @@ def abc_mcmc( nbr_samples, model, verbose = False ):
   # init with current state's theta
   #theta_loglik   = state.loglikelihood()
   #theta_logprior = state.logprior()
-  loglik         = model.current.log_posterior() #theta_loglik + theta_logprior
+  loglik         = model.log_posterior() #theta_loglik + theta_logprior
   
   # init states
   thetas          = [model.current.theta]
@@ -17,8 +17,9 @@ def abc_mcmc( nbr_samples, model, verbose = False ):
   acceptances     = [True]
   sim_calls       = [model.current.nbr_sim_calls]
   nbr_accepts     = 1
+  
   for n in xrange(nbr_samples):
-    if verbose:
+    if verbose and np.mod(n+1,100)==0:
       print "T = ", n+1, " of ",nbr_samples
     model.reset_nbr_sim_calls_this_iter()
     this_iters_sim_calls = 0
@@ -63,7 +64,7 @@ def abc_mcmc( nbr_samples, model, verbose = False ):
     #if all_states is not None:
     #  all_states.add( state, this_iters_sim_calls, accepted )
     
-    loglik = model.current.log_posterior()
+    loglik = model.log_posterior()
     nbr_sim_calls += this_iters_sim_calls
     
     acceptances.append( accepted )

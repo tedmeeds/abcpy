@@ -1,0 +1,22 @@
+{
+  "gp" : "basic_regression",
+  "kernel" : {
+    "type" : "matern32",
+    "params" : [ {"name" : "amp", "value" : 3.0 }, 
+                 {"name" : "ls_1", "value" : 10.05}, 
+                 {"name" : "ls_2", "value" : 10.05}, 
+                 {"name" : "ls_3", "value" : 10.05}, 
+                 {"name" : "ls_4", "value" : 10.05}, 
+                 {"name" : "ls_5", "value" : 10.05}, 
+                 {"name" : "ls_6", "value" : 10.05}]
+  },
+  "noise" : {
+    "type" : "standard_noise_model",
+    "params" : [{"name" : "var", "value" : 2.0}]
+  },
+  "mean" : {
+    "type" : "contant_mean_model",
+    "params" : [{"name" : "mu", "value" : 0.0}]
+  }
+}
+

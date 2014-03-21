@@ -14,3 +14,6 @@ class BaseSurrogate( object ):
   def acquire_points( self, to_theta, from_theta, M ):
     raise NotImplementedError
     
+  def offline_simulation( self, theta ):
+    raise NotImplementedError
+    

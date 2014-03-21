@@ -16,7 +16,7 @@ problem = Problem( problem_params, force_init = True )
 
 # since we are running abc_rejection, use a distance epsilon state
 state_params = {}
-state_params["S"]                          = 5
+state_params["S"]                          = 1
 state_params["obs_statistics"]             = problem.get_obs_statistics()
 state_params["theta_prior_rand_func"]      = problem.theta_prior_rand
 state_params["theta_prior_logpdf_func"]    = problem.theta_prior_logpdf
@@ -26,9 +26,9 @@ state_params["simulation_function"]        = problem.simulation_function
 state_params["statistics_function"]        = problem.statistics_function
 state_params["log_kernel_func"]            = log_gaussian_kernel
 state_params["is_marginal"]                = True
-state_params["epsilon"]                    = 0.1 #np.array([0.1,0.1,0.1,1.0])
+state_params["epsilon"]                    = 1.0 #np.array([0.1,0.1,0.1,1.0])
 
-nbr_samples = 1500
+nbr_samples = 150
 #epsilon     = 0.5
 theta0 = problem.theta_prior_rand()
 state  = State( theta0, state_params )
@@ -37,7 +37,7 @@ recorder = Recorder(record_stats=True)
 #recorder.record_state( state, state.nbr_sim_calls, accepted=True )
 
 print "***************  RUNNING ABC MCMC ***************"
-thetas, LL, acceptances,sim_calls = abc_mcmc( nbr_samples, state, recorder  )
+thetas, LL, acceptances,sim_calls = abc_mcmc( nbr_samples, state, recorder, verbose=True  )
 print " ACCEPT RATE = %0.3f"%(recorder.acceptance_rate())
 print "***************  DONE ABC MCMC    ***************"
 

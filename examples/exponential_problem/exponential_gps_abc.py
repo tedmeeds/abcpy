@@ -40,13 +40,18 @@ state_params["statistics_function"]        = problem.statistics_function
 state_params["log_kernel_func"]            = log_gaussian_kernel
 state_params["is_marginal"]                = False
 state_params["epsilon"]                    = 0.0
+state_params["hierarchy_type"]             = "just_gaussian"
 #state_params["hierarchy_type"]      = "jeffreys"
 #state_params["hierarchy_type"]      = "jeffreys"
 
 filename = "./examples/exponential_problem/gp.json"
 json_gp = load_json( filename )
+
 gp = build_gp_from_json( json_gp ) 
-pgp = ProductGaussianProcess( [gp]) 
+#pp.figure()
+#view_this_gp( gp, x_range = [0,0.5] )
+
+pgp = ProductGaussianProcess( [gp] ) 
 surrogate_params = {}
 surrogate_params["gp"] = pgp
 surrogate_params["obs_statistics"]     = state_params["obs_statistics"]
@@ -55,28 +60,32 @@ surrogate_params["obs_statistics"]     = state_params["obs_statistics"]
 
 model_params = {}
 # adaptive-SL params
-model_params["xi"]            = 0.05
+model_params["xi"]            = 0.2
 model_params["M"]             = 100
 model_params["deltaS"]        = 5
 model_params["max_nbr_tries"] = 10
 model_params["gp_json"]       = json_gp
 
+np.random.seed(2)
 epsilon = 5.0
-nbr_samples = 15000
+nbr_samples = 500
 #epsilon     = 0.5
 theta0 = max(np.array([1e-3]), 0*problem.theta_prior_rand() )
 
-
+pp.close("all")
 print "INIT THETA = ",theta0
 #theta0 *= 0
 #theta0 += 0.1
 rej_state_params = state_params.copy()
 rej_state_params["S"] = 1
-rej_state = RejectState(theta0, rej_state_params )
+rej_state = RejectState(None, rej_state_params )
+
+theta0 = problem.theta_prior_rand()
+state  = State( theta0, state_params )
 
 recorder = Recorder(record_stats=True)
-n_reject = 100
-thetas = abc_rejection( n_reject, epsilon, rej_state, recorder = recorder  )
+n_reject = 50
+thetas, discs = abc_rejection( n_reject, epsilon, rej_state, recorder = recorder  )
 theta0 = thetas[-1]
 state  = State( theta0, state_params )
 
@@ -89,23 +98,24 @@ surrogate_params["gp"].init_with_this_data( thetas.reshape( (n_reject,1)), recor
 # for theta in thetas:
 #   surrogate.acquire_points( theta, \
 #                      recorder.statistics=[]
-gp.optimize( method = "minimize", params = {"maxnumlinesearch":10} )                            
-surrogate.update()
+#gp.optimize( method = "minimize", params = {"maxnumlinesearch":10} )                            
+#surrogate.update()
 #pgp.add_data( )
 #surrogate_params["gp"].add_data( thetas.reshape( (n_reject,1)), recorder.get_statistics().reshape( (n_reject,1)))
 #assert False
 model_params["surrogate"]     = surrogate
 model = MH_Model( model_params)
 
-recorder.statistics=[]
-recorder.record_state( state, state.nbr_sim_calls, accepted=True )
+#recorder.statistics=[]
+#recorder.record_state( state, state.nbr_sim_calls, accepted=True )
 
 model.set_current_state( state )
 model.set_recorder( recorder )
 loglik = state.loglikelihood()
 
+#assert False
 print "***************  RUNNING ABC MCMC ***************"
-thetas, LL, acceptances,sim_calls = abc_mcmc( nbr_samples, model  )
+thetas, LL, acceptances,sim_calls = abc_mcmc( nbr_samples, model, verbose=True  )
 print "***************  DONE ABC MCMC    ***************"
 
 print "***************  VIEW RESULTS ***************"

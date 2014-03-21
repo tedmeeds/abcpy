@@ -13,7 +13,6 @@ def default_params():
   params["beta"]            = 0.1
   params["theta_star"]      = 0.1
   params["N"]               = 500  # how many observations we draw per simulation
-  params["seed"]            = 0
   params["q_stddev"]        = 0.01
   
   return params
@@ -40,22 +39,16 @@ class ExponentialProblem( BaseProblem ):
     self.N = params["N"]
     
     
-    # random seed for observations
-    self.seed = None
-    if params.has_key("seed"):
-      self.seed = params["seed"]  
-    
   # "create" problem or load observations  
   def initialize( self ):
     assert self.initialized is False, "Ensure we only call this once..."
     
-    # set random seed (to reproduce results)
-    if self.seed is not None:
-      np.random.randn( self.seed )
-    
     # generate observations and statistics
+    np.random.seed(0)
     self.observations   = self.simulation_function( self.theta_star )
-    self.obs_statistics = self.statistics_function( self.observations )
+    # reproduce by setting seed(0) : 10.086749290513298
+    self.obs_statistics = np.array([10.086749290513298]) #self.statistics_function( self.observations )
+    self.obs_sum        = 10.086749290513298*self.N
     
     self.min_range           = 0.05
     self.max_range           = 0.15
@@ -68,12 +61,12 @@ class ExponentialProblem( BaseProblem ):
     
     self.nbins_coarse   = len(self.coarse_theta_range)
     self.nbins_fine     = len(self.fine_theta_range)
-    self.log_posterior  = gamma_logprob( self.fine_theta_range, self.alpha+self.N, self.beta+self.observations.sum() )
+    self.log_posterior  = gamma_logprob( self.fine_theta_range, self.alpha+self.N, self.beta+self.obs_sum )
     self.posterior      = np.exp(self.log_posterior)
-    self.posterior_mode = (self.N + self.alpha)/(self.observations.sum() + self.beta)
+    self.posterior_mode = (self.N + self.alpha)/(self.obs_sum + self.beta)
     
-    self.true_posterior_logpdf_func = gen_gamma_logpdf(self.alpha+self.N,self.beta+self.observations.sum())
-    self.true_posterior_cdf_func    = gen_gamma_cdf(self.alpha+self.N,self.beta+self.observations.sum())
+    self.true_posterior_logpdf_func = gen_gamma_logpdf(self.alpha+self.N,self.beta+self.obs_sum)
+    self.true_posterior_cdf_func    = gen_gamma_cdf(self.alpha+self.N,self.beta+self.obs_sum)
     
     self.posterior_bars_range = self.coarse_theta_range[:-1] + 0.5*self.coarse_bin_width
     self.posterior_cdf        = self.true_posterior_cdf_func( self.coarse_theta_range )
@@ -116,7 +109,24 @@ class ExponentialProblem( BaseProblem ):
   def theta_proposal_logpdf( self, to_theta, from_theta ):
     return self.proposal_logpdf( to_theta, from_theta, self.proposal_std )
     #return self.proposal_logpdf( to_theta, np.log(from_theta), self.proposal_std )
-      
+  
+  def compute_errors_at_times( self, times, thetas, sims ):
+    errs = []
+    time_ids = []
+    nbr_sims = []
+    
+    for time_id in times:
+      if time_id <= len(thetas):
+        errs.append( bin_errors_1d(self.coarse_theta_range, self.posterior_cdf_bins, thetas[:time_id]) )
+        time_ids.append(time_id)
+        nbr_sims.append(sims[:time_id].sum())
+        
+    errs = np.array(errs)
+    time_ids = np.array(time_ids)
+    nbr_sims = np.array(nbr_sims)
+    
+    return errs, nbr_sims, time_ids 
+    
   # take samples/staistics etc and "view" this particular problem
   def view_results( self, states_object, burnin = 1 ):
     # plotting params
@@ -191,3 +201,139 @@ class ExponentialProblem( BaseProblem ):
     print "SIM      ", total_sims
     # return handle to figure for further manipulation
     return f
+    
+if __name__ == "__main__":
+  # view problem and rejection samples
+  pp.rc('text', usetex=True)
+  pp.rc('font', family='serif')
+  #plt.xlabel(r'\textbf{time} (s)')
+  
+  epsilon = 2.0
+  
+  params = default_params()
+  p = ExponentialProblem(params)
+  p.initialize()
+  thetas = np.load("./uai2014/saved/exponential/rejection_eps2p0_thetas.npy")[:,1]
+  pp.close("all")
+  # f1 = pp.figure(1)
+  # sp1 = f1.add_subplot(111)
+  # pp.plot( p.fine_theta_range, p.posterior, "k--", lw = 2)
+  # 
+  # pp.hist( thetas, p.nbins_coarse, range=p.range,normed = True, alpha = 0.25 )
+  # ax = pp.axis()
+  # pp.axis([p.range[0],p.range[1],ax[2],ax[3]])
+  
+  N = 2000
+  good = []
+  bad = []
+  good_stats = []
+  bad_stats = []
+  for n in range(N):
+    theta = p.theta_prior_rand()
+    sim_outs = p.simulation_function(theta)
+    stats = p.statistics_function(sim_outs)
+    if np.abs( p.obs_statistics - stats )<= epsilon:
+      good.append( theta )
+      good_stats.append(stats)
+    else:
+      bad.append(theta)
+      bad_stats.append(stats)
+      
+  good = np.squeeze(np.array(good))
+  bad = np.squeeze(np.array(bad))
+  good_stats = np.squeeze(np.array(good_stats))
+  bad_stats = np.squeeze(np.array(bad_stats))
+  
+  figsize=(9,6)
+  #dpi=600
+  # f2 = pp.figure(2,figsize=figsize, dpi=dpi)
+  # #f2=pp.figure(figsize=(3,3),dpi=300)
+  # sp = f2.add_subplot(111)
+  # 
+  # pp.plot( bad, bad_stats, 'b.', ms=5,alpha=0.25)
+  # pp.plot( good, good_stats, 'ro', ms=5, alpha = 0.5)
+  # pp.vlines( p.posterior_mode, 0, 20 )
+  # pp.hlines( p.obs_statistics, 0, 1.0 )
+  # pp.hlines( p.obs_statistics+epsilon, 0, 1.0, linestyles="--", lw=2 )
+  # pp.hlines( p.obs_statistics-epsilon, 0, 1.0, linestyles="--", lw=2 )
+  # pp.axis( [0,1.0,0,20])
+  # 
+  # 
+  # set_tick_fonsize( sp, 6 )
+  # set_label_fonsize( sp, 8 )
+  # 
+  from mpl_toolkits.axes_grid1 import host_subplot
+  import mpl_toolkits.axisartist as AA
+  import matplotlib.pyplot as plt
+  
+  f=pp.figure(figsize=figsize)
+
+  fs=16
+  host = host_subplot(111, axes_class=AA.Axes)
+  plt.subplots_adjust(right=0.75)
+
+  
+  #host.plot( bad, bad_stats, 'r.', ms=5,alpha=0.25)
+  host.plot( bad, bad_stats, 'bo', ms=7,alpha=0.25)
+  host.plot( good, good_stats, 'ro', ms=15, alpha = 0.5)
+  #host.vlines( p.posterior_mode, 0, 20 )
+  host.hlines( p.obs_statistics, 0, 1.0 )
+  host.hlines( p.obs_statistics+epsilon, 0, 1.0, linestyles="--", lw=4 )
+  host.hlines( p.obs_statistics-epsilon, 0, 1.0, linestyles="--", lw=4 )
+  #par2 = host.twinx()
+  par1 = host.twinx()
+  xx=np.linspace( 0.001, 0.2, 100 )
+  
+  #par1.plot( xx, np.exp( p.theta_prior_logpdf( xx) ), "b--", lw=1 )
+  p2,=par1.plot( p.fine_theta_range, p.posterior, "b-", lw = 3)
+  par1.hist( thetas, p.nbins_coarse, color="r",histtype="stepfilled",range=p.range,normed = True, alpha = 0.5 )
+  
+  par1.text(0.105,70,r'$\pi( \theta | y )$', fontsize=1.5*fs)
+  par1.text(0.11,25,r'$\pi_{\epsilon}( \theta | y  )$', fontsize=1.5*fs)
+  #pp.axis( [0,0.4,0,20])
+  #par1.axis["right"].label.set_color("b")
+  #par1.axis["right"].label.set_color(p2.get_color())
+  host.set_xlim(0, 0.2)
+  par1.set_xlim(0, 0.2)
+  host.set_ylim(0, 20)
+  par1.set_ylim(0, 250)
+  host.axis["left"].set_label("x")
+  host.axis["left"].label.set_rotation(90)
+  
+  #plt.xlabel(r'\textbf{time} (s)')
+  #par1.axis["right"].set_label("p(theta|y)")
+  par1.axis["right"].set_label(r'\textbf{$\pi( \theta | y )$}')
+  host.axis["bottom"].set_label(r'\textbf{$\theta$}')
+  host.axis["left"].label.set_fontsize(fs)
+  host.axis["bottom"].label.set_fontsize(fs)
+  host.axis["left"].major_ticklabels.set_fontsize(fs)
+  host.axis["bottom"].major_ticklabels.set_fontsize(fs)
+  par1.axis["right"].major_ticklabels.set_fontsize(fs)
+  par1.axis["right"].label.set_fontsize(fs)
+  par1.axis["right"].label.set_rotation(270)
+  par1.axis["right"].label.set_color("b")
+  
+  host.set_title("Exponential problem", fontsize=20)
+  f.savefig( "exponential_problem.eps", format="ps", dpi=600 ) #,bbox_inches="tight")
+  #savefig( "test.png", format="png", dpi=300,bbox_inches="tight")
+  
+  # for tick in host.yaxis.get_major_ticks():
+  #   tick.label.set_fontsize(6)
+  # for tick in par1.yaxis.get_major_ticks():
+  #   tick.label.set_fontsize(6)
+  # 
+  # set_tick_fonsize( host, 6 )
+  # set_label_fonsize( host, 8 )
+  # set_tick_fonsize( par1, 6 )
+  # set_label_fonsize( par1, 8 )
+  #     
+  #fig, ax1 = pp.subplots(111)
+  #ax2 = ax1.twinx()
+  
+  #sp2 = f2.add_subplot(111)
+  # ax2.plot( p.fine_theta_range, p.posterior, "b-", lw = 2)
+#   ax2.hist( thetas, p.nbins_coarse, range=p.range,normed = True, alpha = 0.25 )
+#   ax = ax2.axis()
+#   ax2.axis([p.range[0],p.range[1],0,300])
+  pp.show()
+  

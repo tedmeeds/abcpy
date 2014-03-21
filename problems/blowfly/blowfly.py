@@ -19,7 +19,7 @@ def default_params():
   mu_log_sigma_p   = 0.0
   std_log_sigma_p  = 2.0
   mu_tau           = 15
-  q_factor         = 0.01
+  q_factor         = 0.1
 
   params = {}
   params["blowfly_filename"] = "./problems/blowfly/blowfly.txt"
@@ -44,7 +44,7 @@ class BlowflyProblem( BaseProblem ):
     # which blowfly data are we using
     self.blowfly_filename = params["blowfly_filename"]
     self.theta_names = ["log_P","log_delta","log_N0","log_sigma_d","log_sigma_p","tau"]
-    self.stats_names = ["log mean","log(mean-median)","peaks","log max"]
+    self.stats_names = ["log q1","log q2","log q3","log q4","del q1","del q2","del q3","del q4","mx peaks 0.5","mx peaks 1.5"]
     # each parameter except for tau is in log-space, and it has a gaussian prior
     self.mu_log_P         = params["mu_log_P"]
     self.std_log_P        = params["std_log_P"]
@@ -130,9 +130,9 @@ class BlowflyProblem( BaseProblem ):
 
   # pass outputs through statistics function, return statistics
   def statistics_function( self, outputs ):
-    nstats = 6
+    nstats = 10
     N = len(outputs)
-    
+    s = np.zeros( nstats, dtype = float )
     sorted_dif = np.sort( np.diff(outputs))
     sorted = np.sort(outputs)
     q14 = np.mean( sorted[:N/4]) 
@@ -140,21 +140,37 @@ class BlowflyProblem( BaseProblem ):
     q2 = np.mean( sorted[N/4:3*N/4])
     q34 = np.mean( sorted[N/2:3*N/4]) 
     q44 = np.mean( sorted[3*N/4:]) 
-    s = np.zeros( nstats, dtype = float )
-    s[0] = np.log(q14)  #np.log(q1)
-    s[1] = np.log(q44) #np.log(q24) #np.log(q2)
-    s[2] = np.log(q34)
-    s[3] = np.log(q44)
+    s[0] = np.log(q14/1000.0+1e-12)  #np.log(q1)
+    s[1] = np.log(q24/1000.0+1e-12) #np.log(q24) #np.log(q2)
+    s[2] = np.log(q34/1000.0+1e-12)
+    s[3] = np.log(q44/1000.0+1e-12)
+    
+    q14 = np.mean( sorted_dif[:N/4]) 
+    q24 = np.mean( sorted_dif[N/4:N/2])
+    #q2 = np.mean( sorted_dif[N/4:3*N/4])
+    q34 = np.mean( sorted_dif[N/2:3*N/4]) 
+    q44 = np.mean( sorted_dif[3*N/4:])
+    
+    s[4] = q14/1000.0 #np.log(q14+1e-12)  #np.log(q1)
+    s[5] = q24/1000.0 #np.log(q24+1e-12) #np.log(q24) #np.log(q2)
+    s[6] = q34/1000.0 #np.log(q34+1e-12)
+    s[7] = q44/1000.0 #np.log(q44+1e-12)
+    
+    
     #s[2] = np.log(q4)
     #s[2] = np.mean( sorted_dif[:N/4] )
     #s[3] = np.mean( sorted_dif[N/4:] )
     #s[1] = np.mean( sorted_dif[N/4:3*N/4] )
     #s[0] = np.log( outputs.mean() / 1000.0 )
     #s[1] = np.log( np.abs( (s[0] - np.median(outputs))/ 1000.0 ) )
-    mx,mn = peakdet(outputs/outputs.std(), 0.5 )
-    s[4] = float(len(mx))
-    mx,mn = peakdet(outputs/outputs.std(), 1.5 )
-    s[5] = float(len(mn))
+    ss=outputs.std()
+    if ss > 0:
+      
+      x=outputs/ss
+      mx,mn = peakdet(x, 0.5 )
+      s[8] = float(len(mx))
+      mx,mn = peakdet(x, 1.5 )
+      s[9] = float(len(mx))
     
     #s[4] = np.mean( sorted_dif[:N/4] )
     #s[5] = np.mean( sorted_dif[N/4:] )
@@ -287,14 +303,14 @@ class BlowflyProblem( BaseProblem ):
     
     f=pp.figure()
     for i in range(6):
-      sp=f.add_subplot(2,6,i+1)
+      sp=f.add_subplot(2,10,i+1)
       pp.hist( thetas[:,i], 10, normed=True, alpha = 0.5)
       pp.title( self.theta_names[i])
       set_label_fonsize( sp, 6 )
       set_tick_fonsize( sp, 6 )
       set_title_fonsize( sp, 8 )
-    for i in range(4):
-      sp=f.add_subplot(2,6,6+1+i+1)
+    for i in range(10):
+      sp=f.add_subplot(2,10,10+i+1)
       pp.hist( stats[:,i], 10, normed=True, alpha = 0.5)
       ax=pp.axis()
       pp.vlines( self.obs_statistics[i], 0, ax[3], color="r", linewidths=2)

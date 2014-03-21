@@ -1109,8 +1109,9 @@ def log_pdf_full_mvn( x, mu, cov = None, invcov = None, logdet = None ):
 
   if logdet is None:
       try:
-          #logdet = np.log( np.det(invcov ) ) # 
-          logdet = sum(numpy.log(numpy.linalg.svd(invcov)[1]))
+          neglogdet = np.log( np.linalg.det(cov ) ) # 
+          logdet = -neglogdet
+          #logdet = sum(numpy.log(numpy.linalg.svd(invcov)[1]))
       except:
           logdet = sum( np.log( np.diag( invcov ) ) )
   #print str(-0.5*dim*numpy.log( 2.0 * numpy.pi ) )
@@ -1120,7 +1121,7 @@ def log_pdf_full_mvn( x, mu, cov = None, invcov = None, logdet = None ):
 
   
   if pp.any( np.isnan( logpdf ) ) or pp.any( np.isinf( logpdf ) ):
-      #pdb.set_trace()
+      pdb.set_trace()
       print "********************************"
       print "********************************"
       print "log_pdf_full_mvn has inf"

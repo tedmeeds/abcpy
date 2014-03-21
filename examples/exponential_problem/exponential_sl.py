@@ -40,7 +40,7 @@ state_params["epsilon"]                    = 0.0 #np.array([0.1,0.1,0.1,1.0])
 #state_params["hierarchy_type"]             = "jeffreys"
 state_params["hierarchy_type"]             = "just_gaussian"
 
-nbr_samples = 5000
+nbr_samples = 50
 #epsilon     = 0.5
 theta0 = problem.theta_prior_rand()
 theta0 *=0
@@ -49,7 +49,7 @@ state  = State( theta0, state_params )
 
 recorder = Recorder(record_stats=True)
 
-recorder.record_state( state, state.nbr_sim_calls, accepted=True )
+#recorder.record_state( state, state.nbr_sim_calls, accepted=True )
 
 model.set_current_state( state )
 model.set_recorder( recorder )

@@ -2,7 +2,7 @@ import numpy as np
 import pylab as pp
 
   
-def abc_mcmc( nbr_samples, state, recorder = None ):
+def abc_mcmc( nbr_samples, state, recorder = None, verbose = False ):
   assert state is not None, "need to start with a state"
   
   # init with current state's theta
@@ -19,6 +19,8 @@ def abc_mcmc( nbr_samples, state, recorder = None ):
   sim_calls       = [state.nbr_sim_calls]
   nbr_accepts     = 1
   for n in xrange(nbr_samples):
+    if verbose:
+      print "t=",n
     this_iters_sim_calls = 0
     
     # sample q from a proposal distribution

@@ -6,6 +6,7 @@ def abc_rejection( nbr_samples, epsilon, state, recorder= None, verbose = True )
 
     
   # init states
+  discs = []
   thetas           = []
   nbr_sim_calls    = 0
   acceptances = []
@@ -32,6 +33,7 @@ def abc_rejection( nbr_samples, epsilon, state, recorder= None, verbose = True )
         nbr_accepts += 1
         thetas.append(theta)
         nbr_sim_calls += this_iters_sim_calls
+        discs.append(np.sum(theta_disc))
       
       # this should work even if do not use "all_states"
       if recorder is not None:  
@@ -44,8 +46,9 @@ def abc_rejection( nbr_samples, epsilon, state, recorder= None, verbose = True )
           recorder.record_invalid( theta_state )
           
   thetas = np.array(thetas) 
+  discs = np.array(discs)
   #acceptances = np.array(acceptances)   
-  return thetas
+  return thetas, discs
   
 if __name__ == "__main__":
   assert False, "This demo will no longer work, see /examples/ for working demos."

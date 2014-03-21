@@ -1,0 +1,22 @@
+{
+  "gp" : "basic_regression",
+  "kernel" : {
+    "type" : "matern32",
+    "params" : [ {"name" : "amp", "value" : 0.065, "prior" : {"name" : "gamma", "params" : [1.0,1.0] }}, 
+                 {"name" : "ls_1", "value" : 6.04, "prior" : {"name" : "gamma", "params" : [10.0,1.0] }}, 
+                 {"name" : "ls_2", "value" : 15.38, "prior" : {"name" : "gamma", "params" : [10.0,1.0] }}, 
+                 {"name" : "ls_3", "value" : 3.08, "prior" : {"name" : "gamma", "params" : [10.0,1.0] }}, 
+                 {"name" : "ls_4", "value" : 5.22, "prior" : {"name" : "gamma", "params" : [10.0,1.0] }}, 
+                 {"name" : "ls_5", "value" : 8.65, "prior" : {"name" : "gamma", "params" : [10.0,1.0] }}, 
+                 {"name" : "ls_6", "value" : 28.97, "prior" : {"name" : "gamma", "params" : [10.0,1.0] }}]
+  },
+  "noise" : {
+    "type" : "standard_noise_model",
+    "params" : [{"name" : "var", "value" : 0.0265, "prior" : {"name" : "gamma", "params" : [1.0,10.0] }}]
+  },
+  "mean" : {
+    "type" : "contant_mean_model",
+    "params" : [{"name" : "mu", "value" : -1.017, "prior" : {"name" : "gaussian", "params" : [-10.0,1.1] }}]
+  }
+}
+

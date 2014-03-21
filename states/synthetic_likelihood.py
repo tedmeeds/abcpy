@@ -1,5 +1,5 @@
 from abcpy.state import BaseState
-from abcpy.helpers import logsumexp, log_pdf_full_mvn, gaussian_logpdf, inv_wishart_rnd, wishart_rnd
+from abcpy.helpers import logsumexp, log_pdf_full_mvn, gaussian_logpdf, inv_wishart_rnd, wishart_rnd, invgamma_rnd
 
 import numpy as np
 import scipy as sp
@@ -44,13 +44,13 @@ class SyntheticLikelihoodState( BaseState ):
       
     # kernel and its epsilon
     self.epsilon          = params["epsilon"]
-    self.jitter           = 1e-6*np.eye( self.nbr_stats )
+    self.jitter           = 1e-6
     
     # params specific to loglikelihood ans state updates
     self.S                = params["S"]
     self.is_marginal      = params["is_marginal"]
       
-    if self.hierarchy == "jeffreys":
+    if self.hierarchy == "jeffreys" and self.zero_out_cross_stats_terms is False:
       assert self.S > self.nbr_stats, "we need at  S > nbr stats for wishart samples"
     # 
     self.loglik           = None
@@ -98,12 +98,14 @@ class SyntheticLikelihoodState( BaseState ):
     
     if self.zero_out_cross_stats_terms:
       s = np.diag(self.sum_sq_stats)
-      self.sum_sq_stats = np.diag(s)
-    self.sum_sq_stats += self.jitter
+      self.sum_sq_stats = s + self.jitter*np.random.rand(self.nbr_stats )
+    else:
+      self.sum_sq_stats += np.diag(self.jitter*np.random.rand(self.nbr_stats ))
       
     self.cov_stats    = self.sum_sq_stats / (self.n_stats-1 )
     self.cov_mu_stats = self.cov_stats / self.n_stats
     
+    print "  ",self.n_stats
     #print self.mu_stats, self.cov_stats 
           
     
@@ -122,37 +124,56 @@ class SyntheticLikelihoodState( BaseState ):
     cov_stats = self.cov_stats
     for m in xrange(M):
       if self.hierarchy == "jeffreys":
-        cov_stats = inv_wishart_rnd( self.n_stats-1, self.sum_sq_stats )
-        #std_mu_stats = np.sqrt(cov_stats/self.n_stats)
-        cov_mu_stats = cov_stats/self.n_stats
-        #if m < 3:
-        #  print self.cov_stats, cov_stats 
-        #mu_stats = self.mu_stats + std_mu_stats*np.random.randn()
-        mu_stats = np.random.multivariate_normal( self.mu_stats, cov_mu_stats )
+        if self.nbr_stats == 1 or self.zero_out_cross_stats_terms:
+          a = invgamma_rnd( float(self.n_stats-1), 0.5, len(self.sum_sq_stats) )
+          cov_stats = float(self.n_stats-1)*self.sum_sq_stats/a
+          
+          if any(cov_stats<0) or any( np.isinf(cov_stats)) or any(np.isnan(cov_stats)):
+            print a
+            print cov_stats
+            pdb.set_trace()
+            
+          cov_mu_stats = cov_stats/self.n_stats
+          std_mu_stats = np.sqrt(cov_mu_stats)
+          mu_stats  =  self.mu_stats + std_mu_stats*np.random.randn()
+          #pdb.set_trace()
+        else:
+          cov_stats = inv_wishart_rnd( self.n_stats-1, self.sum_sq_stats )
+          cov_mu_stats = cov_stats/self.n_stats
+
+          mu_stats = np.random.multivariate_normal( self.mu_stats, cov_mu_stats )
+        
+        
       elif self.hierarchy == "just_gaussian":
-        mu_stats = np.random.multivariate_normal( self.mu_stats, self.cov_mu_stats )
+        if self.zero_out_cross_stats_terms:
+          std_mu_stats = np.sqrt(self.cov_mu_stats)
+          std_stats = np.sqrt(self.cov_stats)
+          mu_stats = self.mu_stats + (self.epsilon/self.n_stats+std_mu_stats)*np.random.randn(self.nbr_stats)
+        else:
+          mu_stats = np.random.multivariate_normal( self.mu_stats, self.cov_mu_stats )
         #mu_stats = self.mu_stats + std_mu_stats*np.random.randn()
       else:
         assert False, "no other type yet"
         
-      if self.nbr_stats == 1:
-        logliks[m] = self.loglikelihood_under_model(stats, mu_stats, self.epsilon+np.sqrt(cov_stats) )
+      if self.nbr_stats == 1 or self.zero_out_cross_stats_terms:
+        logliks[m] = self.loglikelihood_under_model(self.obs_statistics, mu_stats, self.epsilon+std_stats )
+        #pdb.set_trace()
       else:
-        logliks[m] = self.mv_loglikelihood_under_model( stats, mu_stats, pow(self.epsilon,2)*np.eye(self.nbr_stats)+cov_stats )
+        logliks[m] = self.mv_loglikelihood_under_model( self.obs_statistics, mu_stats, pow(self.epsilon,2)*np.eye(self.nbr_stats)+cov_stats )
     return logliks
   
   def mv_loglikelihood_under_model( self, stats, mu_stats, cov_stats ):
     return log_pdf_full_mvn( stats, mu_stats, cov_stats )
     
   def loglikelihood_under_model(self, stats, mu_stats, std_stats ): 
-    return np.squeeze(gaussian_logpdf( stats, mu_stats, std_stats ))
+    return np.sum(np.squeeze(gaussian_logpdf( stats, mu_stats, std_stats )))
       
   def loglikelihood( self, theta = None ):
     if len(self.stats) == 0:
       self.acquire( self.S )
       #self.update_model()
       #pdb.set_trace()
-      if self.nbr_stats == 1:
+      if self.nbr_stats == 1 or self.zero_out_cross_stats_terms:
         self.loglik = self.loglikelihood_under_model( self.obs_statistics, self.mu_stats, self.epsilon+np.sqrt(self.cov_stats) )
       else:
         self.loglik = self.mv_loglikelihood_under_model( self.obs_statistics, self.mu_stats, pow(self.epsilon,2)*np.eye(self.nbr_stats)+self.cov_stats )

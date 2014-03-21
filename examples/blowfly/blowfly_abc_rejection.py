@@ -20,13 +20,13 @@ state_params["statistics_function"]   = problem.statistics_function
 # state_params["epsilon"]               = epsilon
 
 nbr_samples = 100
-epsilon     = 1.5
+epsilon     = 15.0
 theta0 = problem.theta_prior_rand()
 state  = State( theta0, state_params )
 recorder = Recorder(record_stats=True)
 
 print "***************  RUNNING ABC REJECTION ***************"
-thetas = abc_rejection( nbr_samples, epsilon, state, recorder  )
+thetas, discs = abc_rejection( nbr_samples, epsilon, state, recorder  )
 print "***************  DONE ABC REJECTION    ***************"
 
 print "***************  VIEW RESULTS ***************"
