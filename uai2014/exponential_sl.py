@@ -9,11 +9,10 @@ from abcpy.metropolis_hastings_models.metropolis_hastings_model import BaseMetro
 from abcpy.states.distance_epsilon import DistanceEpsilonState as RejectState
 from abcpy.algos.rejection         import abc_rejection 
 import pylab as pp
+import numpy as np
 
 # exponential distributed observations with Gamma(alpha,beta) prior over lambda
 problem_params = load_default_params()
-problem_params["q_stddev"]   = 0.01
-
 problem = Problem( problem_params, force_init = True )
 
 
@@ -55,6 +54,8 @@ for S in Ss:
     save_dir = "./uai2014/runs/exponential/sl_pseudo_s%d/"%(state_params["S"])
   
   for repeat in range(repeats):
+    np.random.seed(repeat)
+    
     rej_state_params = state_params.copy()
     rej_state_params["S"] = 1
     rej_state = RejectState(theta0, rej_state_params )
@@ -62,7 +63,7 @@ for S in Ss:
     recorder = Recorder(record_stats=False)
     n_reject = 1
     
-    rej_thetas = abc_rejection( n_reject, reject_epsilon, rej_state, recorder = recorder  )
+    rej_thetas, rej_discs = abc_rejection( n_reject, reject_epsilon, rej_state, recorder = recorder  )
     theta0 = rej_thetas[-1]
     
     state  = State( theta0, state_params )
@@ -79,11 +80,13 @@ for S in Ss:
     
     print "***************  RUNNING ABC MCMC ***************"
     print "S = ", S
+    print "is_marginal", state_params["is_marginal"] 
     print "REPEAT = ",repeat+1
+    
     thetas, LL, acceptances,sim_calls = abc_mcmc( nbr_samples, model, verbose=False  )
     
-    print "***************  VIEW RESULTS ***************"
-    problem.view_results( recorder, burnin = 0 )
+    #print "***************  VIEW RESULTS ***************"
+    #problem.view_results( recorder, burnin = 0 )
     
     print "***************  SAVING ******************************"
     recorder.save_results( out_name )

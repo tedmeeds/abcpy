@@ -8,12 +8,12 @@ from abcpy.metropolis_hastings_models.adaptive_metropolis_hastings_model import 
 
 from abcpy.states.distance_epsilon import DistanceEpsilonState as RejectState
 from abcpy.algos.rejection         import abc_rejection 
+
+import numpy as np
 import pylab as pp
 
 # exponential distributed observations with Gamma(alpha,beta) prior over lambda
 problem_params = load_default_params()
-problem_params["q_stddev"]   = 0.01
-
 problem = Problem( problem_params, force_init = True )
 
 
@@ -27,7 +27,7 @@ state_params["theta_proposal_logpdf_func"] = problem.theta_proposal_logpdf
 state_params["simulation_function"]        = problem.simulation_function
 state_params["statistics_function"]        = problem.statistics_function
 #state_params["log_kernel_func"]            = log_gaussian_kernel
-state_params["is_marginal"]                = True
+state_params["is_marginal"]                = False
 state_params["epsilon"]                    = 0.0
 state_params["hierarchy_type"]             = "just_gaussian"
 
@@ -46,7 +46,9 @@ model_params["deltaS"]        = deltaS
 nbr_samples  = 50000
 #epsilons     = [5.0,2.0,1.0]
 #epsilons     = [5.0,2.0,1.0,0.1,0.05,0.01]
-xis          = [0.4,0.3,0.2,0.1,0.05] #,0.3,0.2,0.1,0.05,0.01]
+xis          = [0.4,0.1] #,0.3,0.2,0.1,0.05,0.01]
+xis          = [0.3,0.2] #,0.3,0.2,0.1,0.05,0.01]
+#xis          = [0.05]#,0.05] #,0.3,0.2,0.1,0.05,0.01]
 repeats      = 10
 reject_epsilon = 0.5
 
@@ -62,7 +64,10 @@ for S in Ss:
 
   for xi in xis:
     model_params["xi"]                    = xi
-    for repeat in range(repeats):
+    for repeat_i in range(repeats):
+      np.random.seed(repeat_i)
+      
+      repeat = repeat_i
       rej_state_params = state_params.copy()
       rej_state_params["S"] = 1
       rej_state = RejectState(theta0, rej_state_params )
@@ -70,7 +75,7 @@ for S in Ss:
       recorder = Recorder(record_stats=False)
       n_reject = 1
     
-      rej_thetas = abc_rejection( n_reject, reject_epsilon, rej_state, recorder = recorder  )
+      rej_thetas, rej_discs = abc_rejection( n_reject, reject_epsilon, rej_state, recorder = recorder  )
       theta0 = rej_thetas[-1]
     
       state  = State( theta0, state_params )
@@ -88,7 +93,8 @@ for S in Ss:
       print "***************  RUNNING ABC MCMC ***************"
       print "S = ", S
       print "xi = ", xi
-      print "REPEAT = ",repeat+1
+      print "is_marginal", state_params["is_marginal"] 
+      print "REPEAT = ",repeat
       thetas, LL, acceptances,sim_calls = abc_mcmc( nbr_samples, model, verbose=True  )
     
       print "***************  VIEW RESULTS ***************"
