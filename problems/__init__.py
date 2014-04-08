@@ -1,1 +1,1 @@
-__all__ = ["exponential","blowfly"]
+__all__ = ["exponential","blowfly","optimization"]

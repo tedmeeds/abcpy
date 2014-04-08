@@ -959,7 +959,7 @@ def logsumexp(x,dim=0):
         return xmax + np.log(np.exp(x-xmax).sum(0))
     elif dim==1:
         xmax = x.max(1)
-        return xmax + np.log(np.exp(x-xmax[:,newaxis]).sum(1))
+        return xmax + np.log(np.exp(x-xmax[:,np.newaxis]).sum(1))
     else: 
         raise 'dim ' + str(dim) + 'not supported'
         
@@ -1265,18 +1265,6 @@ def bin_errors_1d( bins, true_centered_probability, samples ):
   #pdb.set_trace()
   return double_error/2.0
     
-def logsumexp(x,dim=0):
-    """Compute log(sum(exp(x))) in numerically stable way."""
-    #xmax = x.max()
-    #return xmax + log(exp(x-xmax).sum())
-    if dim==0:
-        xmax = x.max(0)
-        return xmax + np.log(np.exp(x-xmax).sum(0))
-    elif dim==1:
-        xmax = x.max(1)
-        return xmax + np.log(np.exp(x-xmax[:,newaxis]).sum(1))
-    else: 
-        raise 'dim ' + str(dim) + 'not supported'
         
 def gamma_logprob( x, alpha, beta ):
   if all(x>0):
