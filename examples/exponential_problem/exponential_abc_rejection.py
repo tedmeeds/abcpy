@@ -20,15 +20,17 @@ state_params["simulation_function"]   = problem.simulation_function
 state_params["statistics_function"]   = problem.statistics_function
 # state_params["epsilon"]               = epsilon
 
-nbr_samples = 100
-epsilon     = 20.5
+nbr_samples = 1000
+epsilon     = 0.5
 theta0 = problem.theta_prior_rand()
 state  = State( theta0, state_params )
 recorder = Recorder()
 recorder.record_state( state, state.nbr_sim_calls, accepted=False )
 
 print "***************  RUNNING ABC REJECTION ***************"
-thetas, discs = abc_rejection( nbr_samples, epsilon, state, recorder  )
+lower_epsilon = -epsilon
+upper_epsilon = epsilon
+thetas, discs = abc_rejection( nbr_samples, lower_epsilon, upper_epsilon, state, problem.theta_prior_rand, recorder  )
 print "***************  DONE ABC REJECTION    ***************"
 
 print "***************  VIEW RESULTS ***************"
