@@ -19,6 +19,19 @@ a2 = 0.230389; loga2 = np.log( a2 )
 a3 = 0.000972; loga3 = np.log( a3 )
 a4 = 0.078188; loga4 = np.log( a4 )
 
+def heavyside( X ):
+  if X.__class__ == np.float64:
+    if X < 0:
+      return 0.0
+    else:
+      return 1.0
+  else:
+    Y = np.ones(X.shape)
+    I = pp.find(X<0)
+    Y[I] = 0
+  
+  return Y
+  
 def positive_normal_rand( mu, stddevs, N = 1 ):
   X = mu + stddevs*np.random.randn( N )
   

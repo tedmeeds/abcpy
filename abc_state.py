@@ -7,7 +7,11 @@ class ABC_State(object):
     self.params        = params
     self.nbr_sim_calls = 0
     self.nbr_sim_calls_this_iter = 0
-    self.S             = 1
+    
+    if params.has_key("S"):
+      self.S    = params["S"]
+    else:
+      self.S             = 1
     
     self.observation_statistics = params["observation_statistics"]
     self.simulation_function = params["simulation_function"]
@@ -23,6 +27,9 @@ class ABC_State(object):
   def add_sim_call( self, N=1 ):
     self.nbr_sim_calls           += N
     self.nbr_sim_calls_this_iter += N
+  
+  def reset_nbr_sim_calls_this_iter(self):
+    self.nbr_sim_calls_this_iter = 0
     
   def loglikelihood( self ):
     raise NotImplementedError

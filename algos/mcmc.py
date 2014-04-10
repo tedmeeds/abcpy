@@ -2,13 +2,19 @@ import numpy as np
 import pylab as pp
 
   
-def abc_mcmc( nbr_samples, state, recorder = None, verbose = False ):
+def abc_mcmc( mcmc_params, state, recorder = None, verbose = False ):
+  nbr_samples   = mcmc_params["nbr_samples"]
+  logprior      = mcmc_params["logprior"]
+  logproposal   = mcmc_params["logproposal"]
+  proposal_rand = mcmc_params["proposal_rand"]
+  is_marginal   = mcmc_params["is_marginal"]
+  
   assert state is not None, "need to start with a state"
   
   # init with current state's theta
   theta          = state.theta
   theta_loglik   = state.loglikelihood()
-  theta_logprior = state.logprior( theta )
+  theta_logprior = logprior( theta )
   loglik         = theta_loglik + theta_logprior
   
   # init states
@@ -24,7 +30,7 @@ def abc_mcmc( nbr_samples, state, recorder = None, verbose = False ):
     this_iters_sim_calls = 0
     
     # sample q from a proposal distribution
-    q_theta = state.proposal_rand( theta )
+    q_theta = proposal_rand( theta )
     
     # create new state for proposal q
     q_state    = state.new( q_theta, state.params )
@@ -33,27 +39,27 @@ def abc_mcmc( nbr_samples, state, recorder = None, verbose = False ):
     q_loglik   = q_state.loglikelihood()
     
     # prior log-density
-    q_logprior = q_state.logprior( q_theta )
+    q_logprior = logprior( q_theta )
     
     # keep track of all sim calls
-    this_iters_sim_calls += q_state.get_nbr_sim_calls_this_iter()
+    this_iters_sim_calls += q_state.nbr_sim_calls_this_iter
     
     # for marginal sampler, we need to re-run the simulation at the current location
-    if state.is_marginal:
+    if is_marginal:
       state = state.new( theta, state.params )
     else:
       state.reset_nbr_sim_calls_this_iter()
 
     # likelihood only computed once (state knows has already been computed)
     theta_loglik   = state.loglikelihood()
-    theta_logprior = state.logprior( theta )
+    theta_logprior = logprior( theta )
     
-    # only count if "marginal"; peseduo-marginal does not run simulations
-    this_iters_sim_calls += state.get_nbr_sim_calls_this_iter()
+    # only count if "marginal"; pseudo-marginal does not run simulations
+    this_iters_sim_calls += state.nbr_sim_calls_this_iter
       
     # log-density of proposals
-    q_to_theta_logproposal = q_state.logproposal( theta, q_theta )  
-    theta_to_q_logproposal = state.logproposal( q_theta, theta ) 
+    q_to_theta_logproposal = logproposal( theta, q_theta )  
+    theta_to_q_logproposal = logproposal( q_theta, theta ) 
     
     # Metropolis-Hastings acceptance log-probability and probability
     log_acc = min(0.0, q_loglik - theta_loglik + \

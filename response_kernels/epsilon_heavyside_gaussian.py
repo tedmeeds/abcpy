@@ -1,19 +1,28 @@
 from abcpy.response_kernel import SimulationResponseKernel
+from abcpy.helpers import gaussian_logpdf, heavyside
+
 import numpy as np
 import pylab as pp
 import pdb
 
-class EpsilonTubeResponseKernel( SimulationResponseKernel ):
+class EpsilonHeavysideGaussianResponseKernel( SimulationResponseKernel ):
     
   def load_params( self, params ):
+    self.down = 1
+    self.up   = 0
+    
     if params.has_key("epsilon"):
       self.epsilon = params["epsilon"]
-      self.lower_epsilon = -self.epsilon
-      self.upper_epsilon = self.epsilon
+    if params.has_key("direction"):
+      if params["direction"] == "down":
+        self.direction = self.down
+      elif params["direction"] == "up":
+        self.direction = self.up
+      else:
+        assert False, "unknown direction"
+    else:
+      self.direction = self.down
       
-    if params.has_key( "upper_epsilon" ) and params.has_key( "lower_epsilon" ):
-      self.lower_epsilon = params["lower_epsilon"]
-      self.upper_epsilon = params["upper_epsilon"]
     
   def loglikelihood( self, observation_statistics, pseudo_statistics ):
     sh = observation_statistics.shape
@@ -30,7 +39,8 @@ class EpsilonTubeResponseKernel( SimulationResponseKernel ):
       S = psh[0]
       J = 1
     
-
+    # if S>1:
+    #   pdb.set_trace()
     if N > 1:
       assert S == 1,"only allow one greater than the other"
     elif S > 1:
@@ -39,12 +49,15 @@ class EpsilonTubeResponseKernel( SimulationResponseKernel ):
     # start with the difference d =  y - y_star
     d = pseudo_statistics - observation_statistics
     
+    if self.direction == self.up:
+      d *= -1
+      
     # assume every observation is outside of tube
-    loglikelihood = -np.inf*np.ones( (N,J) )
+    loglikelihood = np.zeros( (N,J) )
   
     for n in range(N):
-      # find those inside tube and give loglikelihood of 0
-      I = pp.find( ( d[n] <= self.upper_epsilon ) and (d[n] >= self.lower_epsilon) )
-      loglikelihood[n,I] = 0 
+      h = heavyside( d[n] )
+      loglikelihood[n,:] = np.log( 1.0 - h + h*np.exp(  -0.5*pow( d[n]/self.epsilon, 2 ) ) )
     
+    #pdb.set_trace()
     return loglikelihood
