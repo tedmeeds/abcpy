@@ -1,7 +1,8 @@
 import numpy as np
 import pylab as pp
+import pdb
 
-def abc_rejection( nbr_samples, epsilon, state, recorder= None, verbose = True ):
+def abc_rejection( nbr_samples, lower_epsilon, upper_epsilon, state, prior_rand, recorder= None, verbose = True ):
   # required functions
 
     
@@ -20,15 +21,15 @@ def abc_rejection( nbr_samples, epsilon, state, recorder= None, verbose = True )
     # repeat until accepted
     while accepted is False:
       # sample parameter setting from (prior) function
-      theta = state.prior_rand()
+      theta = prior_rand()
       
       # simuation -> outputs -> statistics -> discrepancies
       theta_state    = state.new( theta, state.params )
       theta_disc     = theta_state.discrepancy()
-      this_iters_sim_calls += theta_state.get_nbr_sim_calls_this_iter()
+      this_iters_sim_calls += theta_state.nbr_sim_calls_this_iter
       
       # all discrepancies much be less than all epsilons
-      if np.all( theta_disc <= epsilon ):
+      if np.all( (theta_disc <= upper_epsilon)&(theta_disc >= lower_epsilon) ):
         accepted = True
         nbr_accepts += 1
         thetas.append(theta)

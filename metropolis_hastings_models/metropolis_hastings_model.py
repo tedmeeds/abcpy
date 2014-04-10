@@ -35,7 +35,7 @@ class BaseMetropolisHastingsModel( object ):
     self.recorder = recorder 
    
   def propose_state( self ):
-    q_state = self.current.new( self.current.proposal_rand( self.current.theta ), self.current.params ) 
+    q_state = self.current.new( self.proposal_rand( self.current.theta ), self.current ) 
     self.set_proposed_state( q_state )
        
   def set_proposed_state( self, proposed_state ):
@@ -62,12 +62,12 @@ class BaseMetropolisHastingsModel( object ):
     #pdb.set_trace()
     n = self.get_nbr_sim_calls_this_iter()
     self.set_current_state( self.proposed )
-    #print "moving to proposed",self.get_nbr_sim_calls_this_iter()
+    
     if self.recorder is not None:
       self.recorder.record_state( self.current, n, accepted = True ) 
   
   def log_posterior(self):
-    return self.current.loglikelihood() + self.current.logprior()
+    return self.current.loglikelihood() + self.logprior(self.current.theta)
       
   def log_acceptance( self ):
     q_state = self.proposed
@@ -80,15 +80,15 @@ class BaseMetropolisHastingsModel( object ):
     q_loglik   = q_state.loglikelihood()
     
     # prior log-density
-    q_logprior = q_state.logprior( q_theta )
+    q_logprior = self.logprior( q_theta )
     
     # likelihood only computed once (state knows has already been computed)
     theta_loglik   = state.loglikelihood()
-    theta_logprior = state.logprior( theta )
+    theta_logprior = self.logprior( theta )
     
     # log-density of proposals
-    q_to_theta_logproposal = q_state.logproposal( theta, q_theta )  
-    theta_to_q_logproposal = state.logproposal( q_theta, theta )
+    q_to_theta_logproposal = self.logproposal( theta, q_theta )  
+    theta_to_q_logproposal = self.logproposal( q_theta, theta )
     
     # Metropolis-Hastings acceptance log-probability and probability
     log_acc = min(0.0, q_loglik - theta_loglik + \

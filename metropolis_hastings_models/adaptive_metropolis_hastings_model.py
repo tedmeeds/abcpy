@@ -51,12 +51,12 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
   
   def compute_log_acceptance_offset( self ):
     # prior log-density
-    q_logprior     = self.proposed.logprior( self.proposed.theta )
-    theta_logprior = self.current.logprior( self.current.theta )
+    q_logprior     = self.logprior( self.proposed.theta )
+    theta_logprior = self.logprior( self.current.theta )
   
     # log-density of proposals
-    q_to_theta_logproposal = self.proposed.logproposal( self.current.theta, self.proposed.theta )  
-    theta_to_q_logproposal = self.current.logproposal( self.proposed.theta, self.current.theta )
+    q_to_theta_logproposal = self.logproposal( self.current.theta, self.proposed.theta )  
+    theta_to_q_logproposal = self.logproposal( self.proposed.theta, self.current.theta )
       
     # this quantity is constant, the log-likelihood varies
     return q_logprior - theta_logprior + q_to_theta_logproposal - theta_to_q_logproposal
