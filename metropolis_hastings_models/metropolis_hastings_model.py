@@ -20,22 +20,25 @@ class BaseMetropolisHastingsModel( object ):
   def get_nbr_sim_calls_this_iter(self):
     self.nbr_sim_calls_this_iter = 0
     if self.current is not None:
-      self.nbr_sim_calls_this_iter += self.current.get_nbr_sim_calls_this_iter()
+      self.nbr_sim_calls_this_iter += self.current.nbr_sim_calls_this_iter
     if self.proposed is not None:
-      self.nbr_sim_calls_this_iter += self.proposed.get_nbr_sim_calls_this_iter()
+      self.nbr_sim_calls_this_iter += self.proposed.nbr_sim_calls_this_iter
     return self.nbr_sim_calls_this_iter 
   
   def describe_states(self):
     return ""
       
   def load_params( self, params ):
-    pass
+    self.logprior      = params["logprior"]
+    self.logproposal   = params["logproposal"]
+    self.proposal_rand = params["proposal_rand"]
+    self.is_marginal   = params["is_marginal"]
   
   def set_recorder( self, recorder ):
     self.recorder = recorder 
    
   def propose_state( self ):
-    q_state = self.current.new( self.proposal_rand( self.current.theta ), self.current ) 
+    q_state = self.current.new( self.proposal_rand( self.current.theta ), self.current.params ) 
     self.set_proposed_state( q_state )
        
   def set_proposed_state( self, proposed_state ):
@@ -47,7 +50,7 @@ class BaseMetropolisHastingsModel( object ):
   
   def update_current( self ):
     # for marginal sampler, we need to re-run the simulation at the current location
-    if self.current.is_marginal:
+    if self.is_marginal:
       state = self.current.new( self.current.theta, self.current.params )  
       self.set_current_state( state )
     else:

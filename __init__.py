@@ -1,1 +1,1 @@
-__all__ = ['algos','kernels','states','metropolis_hastings_models','examples','problems','surrogates','response_models']
+__all__ = ['algos','kernels','states','metropolis_hastings_models','examples','problems','surrogates','response_models','acquisition_models']

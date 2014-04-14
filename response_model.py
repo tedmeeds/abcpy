@@ -5,7 +5,10 @@
 #
 # =========================================================================== #
 class SimulationResponseModel( object ):
-  
+  def __init__( self, params ):
+    self.params = params
+    self.load_params(params)
+    
   def load_params( self, params ):
     raise NotImplementedError
     
@@ -15,8 +18,8 @@ class SimulationResponseModel( object ):
   def update( self, pseudo_observations, thetas ):
     raise NotImplementedError
     
-  def loglikelihood_of_observations( self, observations ):
+  def loglikelihood( self, observations ):
     raise NotImplementedError
     
-  def loglikelihood_of_observations_rand( self, observations, N = 1 ):
+  def loglikelihood_rand( self, observations, N = 1 ):
     raise NotImplementedError

@@ -10,7 +10,8 @@ class KernelState(ABC_State):
     self.loglikelihood_is_computed   = False
     self.discrepancy_values            = None
     
-    self.kernel = params["kernel"]
+    if params.has_key("kernel"):
+      self.kernel = params["kernel"]
     
   def new( self, theta, params = None ):
     if theta is None:
@@ -25,7 +26,6 @@ class KernelState(ABC_State):
       
     self.run_simulator_and_compute_statistics()
     self.compute_loglikelihood()
-    
     return self.loglikelihood_value
   
   def compute_loglikelihood(self):

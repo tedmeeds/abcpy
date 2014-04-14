@@ -68,7 +68,7 @@ class BaseStateRecorder( object ):
     self.thetas.append( state.theta )
     if self.record_stats:
       
-      self.mu_statistics.append(state.statistics)
+      self.mu_statistics.append(state.simulation_statistics)
       # if len( state.stats) > 0:
 #         if len(self.statistics) == 0 :
 #           #self.statistics.append( state.stats )

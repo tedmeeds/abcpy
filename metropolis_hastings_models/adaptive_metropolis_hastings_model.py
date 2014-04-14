@@ -36,11 +36,13 @@ def unconditional_metropolis_hastings_error( alphas, tau ):
 class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
     
   def load_params( self, params ):
-    self.xi            = params["xi"]
-    self.M             = params["M"]
-    self.deltaS        = params["deltaS"]
-    self.max_nbr_tries = params["max_nbr_tries"] 
-    self.errors        = []
+    super(AdaptiveMetropolisHastingsModel, self).load_params(params )
+    self.acquisition_model  = params["acquisition_model"]
+    self.xi                 = params["xi"]
+    self.M                  = params["M"]
+    self.deltaS             = params["deltaS"]
+    self.max_nbr_tries      = params["max_nbr_tries"] 
+    self.errors             = []
     
   def metropolis_hastings_error( self, acceptance_values,  u = None ):
     self.median = np.median( acceptance_values )
@@ -108,7 +110,8 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
       return -np.inf
     
   def acquire_points( self ):
-    if np.random.rand() < 0.5:
-      self.proposed.acquire( self.deltaS )
-    else:
-      self.current.acquire( self.deltaS )
+    thetas = self.acquisition_model.acquire( self.current, self.proposed, self.deltaS )
+    # if np.random.rand() < 0.5:
+    #   self.proposed.acquire( self.deltaS )
+    # else:
+    #   self.current.acquire( self.deltaS )
