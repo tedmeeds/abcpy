@@ -40,6 +40,7 @@ class BaseMetropolisHastingsModel( object ):
   def propose_state( self ):
     q_state = self.current.new( self.proposal_rand( self.current.theta ), self.current.params ) 
     self.set_proposed_state( q_state )
+    #pdb.set_trace()
        
   def set_proposed_state( self, proposed_state ):
     self.proposed = proposed_state
@@ -55,6 +56,7 @@ class BaseMetropolisHastingsModel( object ):
       self.set_current_state( state )
     else:
       self.current.reset_nbr_sim_calls_this_iter()
+    #pdb.set_trace()
    
   def stay_in_current_state( self ):
     #print "staying in current", self.get_nbr_sim_calls_this_iter()
@@ -65,7 +67,7 @@ class BaseMetropolisHastingsModel( object ):
     #pdb.set_trace()
     n = self.get_nbr_sim_calls_this_iter()
     self.set_current_state( self.proposed )
-    
+    #pdb.set_trace()
     if self.recorder is not None:
       self.recorder.record_state( self.current, n, accepted = True ) 
   

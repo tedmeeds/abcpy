@@ -17,7 +17,7 @@ class ResponseModelState(KernelState):
       params = self.params
       
     # response_model will decide if new means copy or just set to same response model (ie for surrogates)
-    response_model = self.response_model.new( params )
+    response_model = self.response_model.new( self.response_model.params )
     return ResponseModelState( theta, params, response_model )
    
   def acquire( self, N = 1 ):
@@ -46,7 +46,7 @@ class ResponseModelState(KernelState):
     assert J == J1, "observation stats and pseudo stats should be the same"
     
     # over all observation statistics
-    pdb.set_trace
+    #pdb.set_trace
     loglike_n = self.response_model.loglikelihood( observation_statistics )
         
     self.loglikelihood_value = loglike_n.sum()

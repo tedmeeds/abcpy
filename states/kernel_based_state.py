@@ -26,6 +26,7 @@ class KernelState(ABC_State):
       
     self.run_simulator_and_compute_statistics()
     self.compute_loglikelihood()
+    
     return self.loglikelihood_value
   
   def compute_loglikelihood(self):

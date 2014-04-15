@@ -7,7 +7,7 @@ from abcpy.response_models.gaussian_response_model import GaussianResponseModel 
 from abcpy.states.state_recorder    import BaseStateRecorder as Recorder
 #from abcpy.kernels.gaussian         import log_gaussian_kernel
 from abcpy.metropolis_hastings_models.metropolis_hastings_model import BaseMetropolisHastingsModel as MH_Model
-from abcpy.metropolis_hastings_models.adaptive_metropolis_hastings_model import AdaptiveMetropolisHastingsModel as MH_Model
+#from abcpy.metropolis_hastings_models.adaptive_metropolis_hastings_model import AdaptiveMetropolisHastingsModel as MH_Model
 from abcpy.acquisition_models.random_acquisition import RandomAcquisitionModel as AcquisitionModel
 from abcpy.helpers import logsumexp
 import numpy as np
@@ -15,17 +15,17 @@ import pylab as pp
 
 # exponential distributed observations with Gamma(alpha,beta) prior over lambda
 problem_params = load_default_params()
-problem_params["noise"] = 0.01
+problem_params["noise"] = 0.1
 problem_params["prior_mu"] = 0
 problem_params["prior_std"] = 1
 problem_params["q_stddev"] = 0.75
 problem = Problem( problem_params, force_init = True )
 
-response_model_params = {}
+response_model_params = {"diagonalize":True, "likelihood_type":"logcdf"}
 acquistion_params = {}
 epsilon     = 0.25
 
-nbr_samples = 500
+nbr_samples = 5000
 mcmc_params = {}
 mcmc_params["priorrand"]         = problem.theta_prior_rand
 mcmc_params["logprior"]          = problem.theta_prior_logpdf
