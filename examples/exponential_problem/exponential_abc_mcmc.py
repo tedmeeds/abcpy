@@ -1,6 +1,6 @@
 from abcpy.problems.exponential     import ExponentialProblem as Problem
 from abcpy.problems.exponential     import default_params     as load_default_params
-from abcpy.algos.mcmc               import abc_mcmc       
+from abcpy.algos.mcmc               import abc_mcmc 
 from abcpy.response_kernels.epsilon_tube import EpsilonTubeResponseKernel as Kernel
 #from abcpy.response_kernels.epsilon_gaussian import EpsilonGaussianResponseKernel as Kernel
 from abcpy.states.kernel_based_state  import KernelState as State
@@ -9,7 +9,6 @@ from abcpy.states.state_recorder      import BaseStateRecorder as Recorder
 import pylab as pp
 import numpy as np
 
-# exponential distributed observations with Gamma(alpha,beta) prior over lambda
 problem_params = load_default_params()
 problem = Problem( problem_params, force_init = True )
 
@@ -20,15 +19,14 @@ kernel_params = {}
 #kernel_params["lower_epsilon"]               = -np.inf
 #kernel_params["upper_epsilon"]               = epsilon
 kernel_params["epsilon"]                     = epsilon
-#kernel_params["direction"]                   = "down"
 
-# since we are running abc_rejection, use a distance epsilon state
 state_params = {}
 state_params["S"]                      = 5
 state_params["observation_statistics"] = problem.get_obs_statistics()
+state_params["observation_groups"]     = problem.get_obs_groups()
 state_params["simulation_function"]    = problem.simulation_function
 state_params["statistics_function"]    = problem.statistics_function
-state_params["kernel"]                 = Kernel( kernel_params )
+state_params["response_groups"]        = [Kernel( kernel_params )]
 
 
 mcmc_params = {}

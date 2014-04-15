@@ -3,12 +3,12 @@ import numpy as np
 import pdb
 
 class ResponseModelState(KernelState):
-  def __init__( self, theta, params, response_model = None ):
-    super(ResponseModelState, self).__init__(theta, params )
-    if response_model is None:
-      self.response_model = self.params["response_model"]
-    else:
-      self.response_model = response_model
+  def __init__( self, theta, params, response_groups = None ):
+    super(ResponseModelState, self).__init__(theta, params, response_groups )
+    # if response_model is None:
+    #   self.response_model = self.params["response_model"]
+    # else:
+    #   self.response_model = response_model
     
   def new( self, theta, params = None ):
     if theta is None:
@@ -17,50 +17,71 @@ class ResponseModelState(KernelState):
       params = self.params
       
     # response_model will decide if new means copy or just set to same response model (ie for surrogates)
-    response_model = self.response_model.new( self.response_model.params )
-    return ResponseModelState( theta, params, response_model )
+    #response_model = self.response_model.new( self.response_model.params )
+    response_groups = [rg.new(rg.params) for rg in self.response_groups]
+    return ResponseModelState( theta, params, response_groups )
    
   def acquire( self, N = 1 ):
     # run for N more times, do not reset stats already computed
     self.run_simulator_and_compute_statistics( reset = False, S = N )
-    self.loglikelihood_is_computed = False
     
-  # def loglikelihood(self):
-  #   if self.loglikelihood_is_computed:
-  #     return self.loglikelihood_value
-  #     
-  #   self.run_simulator_and_compute_statistics()
-  #   self.compute_loglikelihood()
-  #   
-  #   return self.loglikelihood_value
+    ngroups = len(self.observation_groups)
+    for group_id, sg, rg in zip( range(ngroups), self.observation_groups, self.response_groups ):
+      rg.add( self.theta, self.simulation_statistics[-N:,sg.ids], sg.ystar )
+      
+    #pdb.set_trace()
+    self.loglikelihood_is_computed = False
   
+  def loglikelihood(self):
+    if self.loglikelihood_is_computed:
+      return self.loglikelihood_value
+    
+    if self.response_groups[0].is_empty():  
+      self.run_simulator_and_compute_statistics()
+    
+      ngroups = len(self.observation_groups)
+      for group_id, sg, rg in zip( range(ngroups), self.observation_groups, self.response_groups ):
+        rg.add( self.theta, self.simulation_statistics[:,sg.ids], sg.ystar )
+        
+      #self.response_model.add( self.theta, self.simulation_statistics, self.observation_statistics )
+      
+    self.compute_loglikelihood()
+    
+    return self.loglikelihood_value
+      
   def compute_loglikelihood(self):
     pseudo_statistics      = self.simulation_statistics
     observation_statistics = self.observation_statistics   
-    
-    self.response_model.update( self.theta, pseudo_statistics, observation_statistics )
     
     S,J1 = pseudo_statistics.shape
     N,J  = observation_statistics.shape
     
     assert J == J1, "observation stats and pseudo stats should be the same"
     
-    # over all observation statistics
-    #pdb.set_trace
-    loglike_n = self.response_model.loglikelihood( observation_statistics )
+    ngroups = len(self.observation_groups)
+    self.loglikelihood_value = 0.0
+    for group_id, sg, rg in zip( range(ngroups), self.observation_groups, self.response_groups ):
+      self.loglikelihood_value += rg.loglikelihood( self.theta, sg.ystar )
         
-    self.loglikelihood_value = loglike_n.sum()
+    # over all observation statistics
+    #loglike_n = self.response_model.loglikelihood( self.theta, observation_statistics )
+        
+    #self.loglikelihood_value = loglike_n.sum()
       
     self.loglikelihood_is_computed = True
     
   def loglikelihood_rand( self, M=1 ):
     # call likelihood to force running simulator
-    loglik = self.loglikelihood()
+    if self.response_groups[0].is_empty():   
+      self.run_simulator_and_compute_statistics()
+      ngroups = len(self.observation_groups)
+      for group_id, sg, rg in zip( range(ngroups), self.observation_groups, self.response_groups ):
+        rg.add( self.theta, self.simulation_statistics[:,sg.ids], sg.ystar )
+      #self.response_model.add( self.theta, self.simulation_statistics, self.observation_statistics )
       
-    return self.response_model.loglikelihood_rand( self.observation_statistics, M )
-      
-  # def loglikelihood( self ):
-  #   return self.response_model.loglikelihood()
-  #   
-  # def loglikelihood_rand( self, M=1 ):
-  #   return self.response_model.loglikelihood_rand(M)
+    loglikelihood_rand = np.array([rg.loglikelihood_rand(self.theta, sg.ystar, M) \
+                                  for sg,rg in zip(self.observation_groups, self.response_groups)])
+  
+    return loglikelihood_rand.sum(0)
+    
+    #return self.response_model.loglikelihood_rand( self.theta, self.observation_statistics, M )

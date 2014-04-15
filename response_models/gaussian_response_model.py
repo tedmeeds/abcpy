@@ -44,10 +44,28 @@ class GaussianResponseModel( SimulationResponseModel ):
     m = GaussianResponseModel( params )
     return m
     
-  def response_model_rand( self ):
-    raise NotImplementedError
+  def is_empty( self ):
+    if len(self.pseudo_statistics) == 0:
+      return True
+    else:
+      return False
+      
+  def add( self, thetas, pseudo_statistics, observation_statistics ):
+    if len( self.pseudo_statistics ) == 0:
+      self.pseudo_statistics = pseudo_statistics.copy()
+      self.thetas = thetas.copy()
+    else:
+      self.pseudo_statistics = np.vstack( (self.pseudo_statistics, pseudo_statistics) )
+      self.thetas = np.vstack( (self.thetas, thetas) )
+      
+    self.update()
+       
+  def update( self ):
+    self.make_estimators( )
     
-  def update( self, thetas, pseudo_statistics, observation_statistics ):
+  def make_estimators( self, theta = None ):
+    pseudo_statistics = self.pseudo_statistics
+    
     # ignore thetas, observation_statistics
     
     # compute mean, stats_cov, mean_cov
@@ -69,7 +87,9 @@ class GaussianResponseModel( SimulationResponseModel ):
       self.pstats_stddevs      = np.sqrt( np.diag( self.pstats_cov) )
       self.pstats_mean_stddevs = np.sqrt( np.diag( self.pstats_mean_cov) )
     
-  def loglikelihood( self, observations ):
+  def loglikelihood( self, theta, observations ):
+    self.make_estimators( theta )
+    
     if self.likelihood_type == "logpdf":
       if self.diagonalize:
         return mvn_diagonal_logpdf( observations, self.pstats_mean, self.pstats_stddevs )
@@ -83,7 +103,9 @@ class GaussianResponseModel( SimulationResponseModel ):
     else:
       raise NotImplementedError
     
-  def loglikelihood_rand( self, observations, N = 1 ):
+  def loglikelihood_rand( self, theta, observations, N = 1 ):
+    self.make_estimators( theta )
+    
     random_logliks = np.zeros( N )
     J = J = len(self.pstats_mean)
     if self.likelihood_type == "logpdf":

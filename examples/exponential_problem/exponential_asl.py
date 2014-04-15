@@ -7,7 +7,7 @@ from abcpy.response_kernels.epsilon_gaussian import EpsilonGaussianResponseKerne
 from abcpy.states.kernel_based_state  import KernelState as State
 from abcpy.states.state_recorder      import BaseStateRecorder as Recorder
 from abcpy.metropolis_hastings_models.metropolis_hastings_model import BaseMetropolisHastingsModel as MH_Model
-#from abcpy.metropolis_hastings_models.adaptive_metropolis_hastings_model import AdaptiveMetropolisHastingsModel as MH_Model
+from abcpy.metropolis_hastings_models.adaptive_metropolis_hastings_model import AdaptiveMetropolisHastingsModel as MH_Model
 from abcpy.states.response_model_state import ResponseModelState as State
 from abcpy.response_models.gaussian_response_model import GaussianResponseModel as ResponseModel
 from abcpy.acquisition_models.random_acquisition import RandomAcquisitionModel as AcquisitionModel
@@ -22,6 +22,7 @@ nbr_samples = 1500
 #epsilon     = 0.5
 epsilon = 0.1
 response_model_params = {}
+acquistion_params = {}
 kernel_params = {}
 #kernel_params["lower_epsilon"]               = -np.inf
 #kernel_params["upper_epsilon"]               = epsilon
@@ -42,11 +43,11 @@ mcmc_params["proposal_rand"]     = problem.theta_proposal_rand
 mcmc_params["logproposal"]       = problem.theta_proposal_logpdf
 mcmc_params["is_marginal"]       = False
 mcmc_params["nbr_samples"]       = nbr_samples
-# mcmc_params["xi"]                = 0.1
-# mcmc_params["M"]                 = 10
-# mcmc_params["deltaS"]            = 1
-# mcmc_params["max_nbr_tries"]     = 10
-#mcmc_params["acquisition_model"] = AcquisitionModel(acquistion_params)
+mcmc_params["xi"]                = 0.1
+mcmc_params["M"]                 = 10
+mcmc_params["deltaS"]            = 1
+mcmc_params["max_nbr_tries"]     = 10
+mcmc_params["acquisition_model"] = AcquisitionModel(acquistion_params)
 
 model = MH_Model( mcmc_params)
 

@@ -1,4 +1,6 @@
 from abcpy.problem import BaseProblem
+from abcpy.observation_group import ObservationGroup
+
 from abcpy.plotting import *
 from abcpy.helpers import *
 import numpy as np
@@ -82,7 +84,12 @@ class ExponentialProblem( BaseProblem ):
   def get_obs_statistics( self ):
     assert self.initialized, "Not initialized..."
     return self.obs_statistics
-      
+    
+  def get_obs_groups( self ):
+    assert self.initialized, "Not initialized..."
+    g = ObservationGroup( np.array([0]), self.get_obs_statistics(), {})
+    return [g]   
+    
   # run simulation at parameter setting theta, return outputs
   def simulation_function( self, theta ):
     return np.random.exponential( 1.0/theta, self.N ) # 1/theta because of how python does exponential draws

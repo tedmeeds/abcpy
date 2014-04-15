@@ -5,7 +5,6 @@ from abcpy.states.response_model_state import ResponseModelState as State
 from abcpy.response_models.gaussian_response_model import GaussianResponseModel as ResponseModel
 
 from abcpy.states.state_recorder    import BaseStateRecorder as Recorder
-#from abcpy.kernels.gaussian         import log_gaussian_kernel
 from abcpy.metropolis_hastings_models.metropolis_hastings_model import BaseMetropolisHastingsModel as MH_Model
 #from abcpy.metropolis_hastings_models.adaptive_metropolis_hastings_model import AdaptiveMetropolisHastingsModel as MH_Model
 from abcpy.acquisition_models.random_acquisition import RandomAcquisitionModel as AcquisitionModel

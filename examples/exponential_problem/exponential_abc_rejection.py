@@ -15,9 +15,11 @@ problem = Problem( problem_params, force_init = True )
 state_params = {}
 state_params["S"]                     = 1
 state_params["observation_statistics"]        = problem.get_obs_statistics()
+state_params["observation_groups"]     = problem.get_obs_groups()
 state_params["theta_prior_rand_func"] = problem.theta_prior_rand
 state_params["simulation_function"]   = problem.simulation_function
 state_params["statistics_function"]   = problem.statistics_function
+state_params["response_groups"]        = []
 # state_params["epsilon"]               = epsilon
 
 nbr_samples = 1000

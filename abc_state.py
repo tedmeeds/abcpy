@@ -2,7 +2,7 @@ import numpy as np
 import pdb
 
 class ABC_State(object):
-  def __init__( self, theta, params ):
+  def __init__( self, theta, params, response_groups = None ):
     self.theta         = theta
     self.params        = params
     self.nbr_sim_calls = 0
@@ -14,8 +14,13 @@ class ABC_State(object):
       self.S             = 1
     self.D = None
     self.observation_statistics = params["observation_statistics"]
-    self.simulation_function = params["simulation_function"]
-    self.statistics_function = params["statistics_function"]
+    self.simulation_function    = params["simulation_function"]
+    self.statistics_function    = params["statistics_function"]
+    self.observation_groups     = params["observation_groups"]
+    if response_groups is None:
+      self.response_groups        = params["response_groups"]
+    else:
+      self.response_groups        = response_groups
   
     try:
       self.N, self.J = self.observation_statistics.shape
@@ -56,7 +61,8 @@ class ABC_State(object):
       self.simulation_outputs.append( np.squeeze( self.simulation_function( self.theta ) ) )
       
       if self.D is None:
-        if self.simulation_outputs[-1].__class__ == np.array:
+        #pdb.set_trace()
+        if self.simulation_outputs[-1].__class__ == np.ndarray:
           self.D = len(self.simulation_outputs[-1])
         else:
           self.D = 1

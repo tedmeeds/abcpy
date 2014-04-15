@@ -4,8 +4,8 @@ import numpy as np
 import pdb
 
 class KernelState(ABC_State):
-  def __init__( self, theta, params = None ):
-    super(KernelState, self).__init__(theta,params)
+  def __init__( self, theta, params = None, response_groups = None ):
+    super(KernelState, self).__init__(theta,params,response_groups)
     
     self.loglikelihood_is_computed   = False
     self.discrepancy_values            = None
@@ -13,12 +13,14 @@ class KernelState(ABC_State):
     if params.has_key("kernel"):
       self.kernel = params["kernel"]
     
-  def new( self, theta, params = None ):
+  def new( self, theta, params = None, response_groups = None ):
     if theta is None:
       theta = self.theta
     if params is None:
       params = self.params
-    return KernelState( theta, params )
+    if response_groups is None:
+      response_groups = self.response_groups
+    return KernelState( theta, params, response_groups )
    
   def loglikelihood(self):
     if self.loglikelihood_is_computed:
@@ -43,17 +45,30 @@ class KernelState(ABC_State):
     # each row is the average discrepancy between observations and pseuo stats
     self.discrepancy_values = np.zeros( (N,J) )
     
-    # over all observation statistics
-    for n in range(N):
-      logkernel = np.zeros( (S,J) ) - np.log(S)
+    ngroups = len(self.observation_groups)
+    for group_id, sg, rg in zip( range(ngroups), self.observation_groups, self.response_groups ):
+      logkernel = np.zeros( (S,ngroups) ) - np.log(S)
       
       # over all pseudo statistics
       for s in range(S):
-        logkernel[s,:] = self.kernel.loglikelihood( observations[n,:], statistics[s,:] )
+        # ystar = observation statistics for this stats group
+        logkernel[s,group_id] = rg.loglikelihood( sg.ystar, statistics[s,:][:,sg.ids] )
         
-      # sum log probs across J statistics  
+      # sum log probs across ngroups statistics  
       loglike_by_s = logkernel.sum(1)
       
+      #   
+      # # over all observation statistics
+      # for n in range(N):
+      #   
+      #   
+      #   # over all pseudo statistics
+      #   for s in range(S):
+      #     logkernel[s,:] = self.kernel.loglikelihood( observations[n,:], statistics[s,:] )
+      #     
+      #   # sum log probs across J statistics  
+      #   loglike_by_s = logkernel.sum(1)
+      #   
       # loglikelihood for this observation is log sum_s=1^S exp( sum_j log(p(y_star_j | y_s)))
       loglike_n = logsumexp( loglike_by_s )
       
