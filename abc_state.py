@@ -65,7 +65,8 @@ class ABC_State(object):
       if self.D is None:
         #pdb.set_trace()
         if self.simulation_outputs[-1].__class__ == np.ndarray:
-          self.D = len(self.simulation_outputs[-1])
+          #self.D = len(self.simulation_outputs[-1])
+          self.D = self.simulation_outputs[-1].size
         else:
           self.D = 1
           

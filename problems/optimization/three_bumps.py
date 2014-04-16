@@ -1,6 +1,7 @@
 from abcpy.problem import BaseProblem
 from abcpy.plotting import *
 from abcpy.helpers import *
+from abcpy.observation_group import ObservationGroup
 import numpy as np
 import scipy as sp
 import pylab as pp
@@ -120,12 +121,17 @@ class ThreeBumpsProblem( BaseProblem ):
   def get_obs_statistics( self ):
     assert self.initialized, "Not initialized..."
     return self.obs_statistics
-      
+  
+  def get_obs_groups( self ):
+    g = ObservationGroup( np.array([0]), self.get_obs_statistics(), {})
+    return [g]     
+    
   def simulation_mean_function( self, theta ):
     return -mog_loglikelihood( theta, self.bump_weights, self.bump_centers, self.bump_stds )
     
   # run simulation at parameter setting theta, return outputs
   def simulation_function( self, theta ):
+    #pdb.set_trace()
     return self.simulation_mean_function(theta) + self.noise*np.random.randn()
     
   # pass outputs through statistics function, return statistics

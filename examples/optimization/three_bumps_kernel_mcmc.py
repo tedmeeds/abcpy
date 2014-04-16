@@ -1,12 +1,14 @@
 from abcpy.problems.optimization.three_bumps     import ThreeBumpsProblem   as Problem
 from abcpy.problems.optimization.three_bumps     import default_params       as load_default_params
 from abcpy.algos.mcmc               import abc_mcmc   
+from abcpy.algos.model_mcmc               import abc_mcmc 
 from abcpy.response_kernels.epsilon_tube import EpsilonTubeResponseKernel as Kernel
 from abcpy.response_kernels.epsilon_gaussian import EpsilonGaussianResponseKernel as Kernel
 from abcpy.response_kernels.epsilon_heavyside_gaussian import EpsilonHeavysideGaussianResponseKernel as Kernel
 from abcpy.states.kernel_based_state    import KernelState as State
 #from abcpy.states.distance_epsilon  import DistanceEpsilonState as State
 from abcpy.states.state_recorder    import BaseStateRecorder    as Recorder
+from abcpy.metropolis_hastings_models.metropolis_hastings_model import BaseMetropolisHastingsModel as MH_Model
 #from abcpy.kernels.gaussian         import one_sided_gaussian_kernel as kernel
 #from abcpy.kernels.gaussian         import one_sided_exponential_kernel as kernel
 from abcpy.helpers import logsumexp
@@ -32,9 +34,11 @@ kernel_params["direction"]                   = "down"
 state_params = {}
 state_params["S"]                      = 5
 state_params["observation_statistics"] = problem.get_obs_statistics()
+state_params["observation_groups"]     = problem.get_obs_groups()
 state_params["simulation_function"]    = problem.simulation_function
 state_params["statistics_function"]    = problem.statistics_function
-state_params["kernel"]                 = Kernel( kernel_params )
+state_params["response_groups"]        = [Kernel( kernel_params )]
+#state_params["kernel"]                 = Kernel( kernel_params )
 
 
 mcmc_params = {}
@@ -45,15 +49,22 @@ mcmc_params["logproposal"]     = problem.theta_proposal_logpdf
 mcmc_params["is_marginal"]     = False
 
 nbr_samples = 1500
+model = MH_Model( mcmc_params)
+
+
 theta0 = problem.theta_prior_rand()
 state  = State( theta0, state_params )
-recorder = Recorder()
-recorder.record_state( state, state.nbr_sim_calls, accepted=False )
 
-mcmc_params["nbr_samples"] = nbr_samples 
+recorder = Recorder(record_stats=True)
 
-print "***************  RUNNING ABC MCMC ***************"
-thetas, LL, acceptances,sim_calls = abc_mcmc( mcmc_params, state, recorder  )
+model.set_current_state( state )
+model.set_recorder( recorder )
+loglik = state.loglikelihood()
+
+
+print "***************  RUNNING MODEL ABC MCMC ***************"
+thetas, LL, acceptances,sim_calls = abc_mcmc( nbr_samples, model, verbose = True  )
+print " ACCEPT RATE = %0.3f"%(recorder.acceptance_rate())
 print "***************  DONE ABC MCMC    ***************"
 
 print "***************  VIEW RESULTS ***************"
@@ -62,7 +73,7 @@ problem.view_results( recorder, burnin = 0, epsilon = epsilon )
 #d=problem.ystar+epsilon-problem.simulation_mean_function(problem.fine_theta_range)
 #I=find(d>=0)
 #pdb.set_trace()
-loglikelihood = np.squeeze(state.kernel.loglikelihood(problem.ystar, problem.simulation_mean_function(problem.fine_theta_range)))
+loglikelihood = np.squeeze(state.response_groups[0].loglikelihood(problem.ystar, problem.simulation_mean_function(problem.fine_theta_range)))
 logposterior = loglikelihood + problem.theta_prior_logpdf(problem.fine_theta_range)
 #logposterior -= logsumexp(logposterior)
 posterior = np.exp(logposterior)

@@ -96,9 +96,11 @@ class GaussianProcessSurrogate(BaseSurrogate):
   #   return log_p
    
   def update(self):
+    pass
     #self.gp.optimize( method = "minimize", params = {"maxnumlinesearch":10} )  
     #self.gp.optimize( method = "minimize", params = {"maxnumlinesearch":10} )
-    print "UPDATING SURROGATE!!!!!"
-    #self.gp.optimize( method = "minimize", params = {"maxnumlinesearch":2} )
-    thetas = self.gp.sample( method = "slice", params = {"nbrSteps":3,"N":2,"MODE":2,"set_to_last_sample":True}) 
+    #print "UPDATING SURROGATE!!!!!"
+    #if self.gp.N < 100:
+    #  self.gp.optimize( method = "minimize", params = {"maxnumlinesearch":2} )
+    #thetas = self.gp.sample( method = "slice", params = {"nbrSteps":3,"N":2,"MODE":2,"set_to_last_sample":True}) 
     #self.gp.set_params( thetas[-1])
