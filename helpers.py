@@ -19,6 +19,25 @@ a2 = 0.230389; loga2 = np.log( a2 )
 a3 = 0.000972; loga3 = np.log( a3 )
 a4 = 0.078188; loga4 = np.log( a4 )
 
+def mvn_logpdf( X, mu, cov, invcov = None, logdet = None ):
+  return log_pdf_full_mvn( X, mu, cov, invcov, logdet )
+  
+def mvn_diagonal_logpdf( X, mu, stddevs ):
+  return log_pdf_diag_mvn( X, mu, stddevs )
+  
+def mvn_diagonal_logcdf( X, mu, stddevs ):
+  logpdf = 0.0
+  #pdb.set_trace()
+  for x,mu,std in zip( X.T, mu, stddevs ):
+    cdf = np.squeeze( normcdf( x, mu, std ) )
+    if cdf ==0:
+      logpdf += np.log(1e-12)
+    else:
+      logpdf += np.log( cdf )
+  return logpdf
+  
+  #return log_pdf_diag_mvn( X, mu, stddevs )
+  
 def heavyside( X ):
   if X.__class__ == np.float64:
     if X < 0:

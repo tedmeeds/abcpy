@@ -1,19 +1,23 @@
 class BaseSurrogate( object ):
   def __init__( self, params ):
     self.params = params
-    self.nbr_sim_calls_this_iter = 0
-    self.init_with_params( params )
+    self.load_params( params )
     
-  def init_with_params( self, params ):
-    self.obs_statistics    = params["obs_statistics"]
-    self.run_sim_and_stats = params["run_sim_and_stats_func"]
-    
-  def loglik_differences_rand( self, to_theta, from_theta, M ):
+  def load_params( self, params ):
     raise NotImplementedError
-        
-  def acquire_points( self, to_theta, from_theta, M ):
+  
+  def make_estimators( self, theta = None ):
+    # in future, may want to memoize conditional distributions
+    pass
+      
+  def logpdf( self, theta, observations ):
+    raise NotImplementedError
+      
+  def logcdf( self, theta, observations ):
+    raise NotImplementedError
+      
+  def logpdf_rand( self, theta, observations, N = 1 ):
     raise NotImplementedError
     
-  def offline_simulation( self, theta ):
+  def logcdf_rand( self, theta, observations, N = 1 ):
     raise NotImplementedError
-    

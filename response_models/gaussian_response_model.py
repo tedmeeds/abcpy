@@ -1,27 +1,8 @@
 from abcpy.response_model import SimulationResponseModel
-from abcpy.helpers import log_pdf_full_mvn, log_pdf_diag_mvn, normcdf
+from abcpy.helpers import mvn_logpdf, mvn_diagonal_logpdf, mvn_diagonal_logcdf
 
 import numpy as np
 import pdb
-
-def mvn_logpdf( X, mu, cov, invcov = None, logdet = None ):
-  return log_pdf_full_mvn( X, mu, cov, invcov, logdet )
-  
-def mvn_diagonal_logpdf( X, mu, stddevs ):
-  return log_pdf_diag_mvn( X, mu, stddevs )
-  
-def mvn_diagonal_logcdf( X, mu, stddevs ):
-  logpdf = 0.0
-  #pdb.set_trace()
-  for x,mu,std in zip( X.T, mu, stddevs ):
-    cdf = np.squeeze( normcdf( x, mu, std ) )
-    if cdf ==0:
-      logpdf += np.log(1e-12)
-    else:
-      logpdf += np.log( cdf )
-  return logpdf
-  
-  #return log_pdf_diag_mvn( X, mu, stddevs )
   
 class GaussianResponseModel( SimulationResponseModel ):
   

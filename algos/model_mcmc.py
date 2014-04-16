@@ -69,7 +69,9 @@ def abc_mcmc( nbr_samples, model, verbose = False ):
     
     acceptances.append( accepted )
     accept_rate     = float(nbr_accepts)/float(n+1)
-    efficiency_rate = float(nbr_accepts)/float(nbr_sim_calls)
+    efficiency_rate = 0.0
+    if nbr_sim_calls > 0:
+      efficiency_rate = float(nbr_accepts)/float(nbr_sim_calls)
     sim_calls.append( this_iters_sim_calls )
     LL.append(loglik)
     thetas.append(model.current.theta.copy())

@@ -8,7 +8,7 @@ from abcpy.states.distance_epsilon import DistanceEpsilonState as RejectState
 from abcpy.states.state_recorder       import BaseStateRecorder as Recorder
 from abcpy.kernels.gaussian import log_gaussian_kernel
 #from abcpy.metropolis_hastings_models.metropolis_hastings_model import BaseMetropolisHastingsModel as MH_Model
-from abcpy.metropolis_hastings_models.surrogate_metropolis_hastings_model import SurrogateMetropolisHastingsModel as MH_Model
+#from abcpy.metropolis_hastings_models.surrogate_metropolis_hastings_model import SurrogateMetropolisHastingsModel as MH_Model
 
 from abcpy.surrogates.gps import GaussianProcessSurrogate as Surrogate
 

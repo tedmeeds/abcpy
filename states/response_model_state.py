@@ -50,13 +50,13 @@ class ResponseModelState(KernelState):
     return self.loglikelihood_value
       
   def compute_loglikelihood(self):
-    pseudo_statistics      = self.simulation_statistics
-    observation_statistics = self.observation_statistics   
+    #pseudo_statistics      = self.simulation_statistics
+    #observation_statistics = self.observation_statistics   
     
-    S,J1 = pseudo_statistics.shape
-    N,J  = observation_statistics.shape
+    #S,J1 = pseudo_statistics.shape
+    #N,J  = observation_statistics.shape
     
-    assert J == J1, "observation stats and pseudo stats should be the same"
+    #assert J == J1, "observation stats and pseudo stats should be the same"
     
     ngroups = len(self.observation_groups)
     self.loglikelihood_value = 0.0

@@ -7,6 +7,8 @@ class ABC_State(object):
     self.params        = params
     self.nbr_sim_calls = 0
     self.nbr_sim_calls_this_iter = 0
+    self.simulation_outputs     = []
+    self.simulation_statistics  = []
     
     if params.has_key("S"):
       self.S    = params["S"]
@@ -49,7 +51,7 @@ class ABC_State(object):
     # keep track of old results (eg for acquisition functions -- adding new design pts)
     if reset is False:
       old_sim_outputs  = self.simulation_outputs
-      old_sim_stats = self.simulation_statistics
+      old_sim_stats    = self.simulation_statistics
       
     # resetting outputs and statistics (save these before if necessary)
     self.simulation_outputs     = []
@@ -78,5 +80,6 @@ class ABC_State(object):
     self.simulation_statistics = np.array(self.simulation_statistics).reshape( ( S, self.J ) )
     
     if reset is False:
-      self.simulation_outputs    = np.vstack( (old_sim_outputs,self.simulation_outputs))
-      self.simulation_statistics = np.vstack( (old_sim_stats,self.simulation_statistics))
+      if len(old_sim_outputs) > 0:
+        self.simulation_outputs    = np.vstack( (old_sim_outputs,self.simulation_outputs))
+        self.simulation_statistics = np.vstack( (old_sim_stats,self.simulation_statistics))
