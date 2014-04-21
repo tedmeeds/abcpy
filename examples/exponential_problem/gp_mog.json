@@ -1,0 +1,31 @@
+{
+  "gp" : "basic_regression",
+  "kernel000" : {
+    "type" : "matern32",
+    "params" : [ {"name" : "amp", "value" : 3.0, "prior" : {"name" : "gamma", "params" : [3.0,1.0] }}, 
+                 {"name" : "ls_1", "value" : 0.1, "prior" : {"name" : "gamma", "params" : [1.0,2.0] }}]
+  },
+  "kernel" : {
+    "type" : "wmog",
+    "params" : [ {"name" : "K", "value" : 5}, 
+                 {"name" : "nbags", "value" : 10}, 
+                 {"name" : "priorPi", "value" : 0.01}, 
+                 {"name" : "factor", "value" : 0.01}]
+  },
+  "noise" : {
+    "type" : "standard_noise_model",
+    "params" : [{"name" : "var", "value" : 0.19, "prior" : {"name" : "gamma", "params" : [1.0,5.0] }}]
+  },
+  "mean00" : {
+    "type" : "contant_mean_model",
+    "params" : [{"name" : "mu", "value" : 10.0, "prior" : {"name" : "gaussian", "params" : [10.0,10.1] }}]
+  },
+  "mean" : {
+    "type" : "wmog",
+    "params" : [ {"name" : "K", "value" : 5}, 
+                 {"name" : "nbags", "value" : 10}, 
+                 {"name" : "priorPi", "value" : 0.01}, 
+                 {"name" : "factor", "value" : 0.01}]
+  }
+}
+

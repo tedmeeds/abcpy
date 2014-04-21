@@ -9,6 +9,12 @@ import pdb
 
 class GaussianProcessSurrogate(BaseSurrogate): 
 
+  def is_empty(self):
+    if self.gp.N == 0:
+      return True
+    else:
+      return False
+      
   def load_params( self, params ):
     self.gp             = params["gp"]
   
@@ -24,7 +30,7 @@ class GaussianProcessSurrogate(BaseSurrogate):
       assert S1 == 1, "if there are many stats, make sure only one theta"
       THETAS = np.array( [thetas.copy() for s in range(S)] )
     else:
-      THETAS = thetas.reshape( (D,S) )
+      THETAS = thetas.reshape( (S,D) )
       
     #pdb.set_trace()
     self.gp.add_data( THETAS, pseudo_statistics.reshape((S,J)) )  
@@ -96,11 +102,13 @@ class GaussianProcessSurrogate(BaseSurrogate):
   #   return log_p
    
   def update(self):
-    pass
+    if np.random.rand()<0.25:
+      self.gp.train()
+    #pass
     #self.gp.optimize( method = "minimize", params = {"maxnumlinesearch":10} )  
     #self.gp.optimize( method = "minimize", params = {"maxnumlinesearch":10} )
     #print "UPDATING SURROGATE!!!!!"
     #if self.gp.N < 100:
     #  self.gp.optimize( method = "minimize", params = {"maxnumlinesearch":2} )
-    #thetas = self.gp.sample( method = "slice", params = {"nbrSteps":3,"N":2,"MODE":2,"set_to_last_sample":True}) 
+    thetas = self.gp.sample( method = "slice", params = {"nbrSteps":3,"N":2,"MODE":2,"set_to_last_sample":True}) 
     #self.gp.set_params( thetas[-1])

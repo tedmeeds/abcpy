@@ -44,21 +44,20 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
     self.max_nbr_tries      = params["max_nbr_tries"] 
     self.errors             = []
     
-  def metropolis_hastings_error( self, acceptance_values,  u = None ):
-    self.median = np.median( acceptance_values )
+  def metropolis_hastings_error( self, acceptance_values,  median, u = None ):
     if u is None:
-      return unconditional_metropolis_hastings_error( acceptance_values, self.median )
+      return unconditional_metropolis_hastings_error( acceptance_values, median )
     else:
-      return conditional_metropolis_hastings_error( acceptance_values, self.median, u )
+      return conditional_metropolis_hastings_error( acceptance_values, median, u )
   
-  def compute_log_acceptance_offset( self ):
+  def compute_log_acceptance_offset( self, current, proposed ):
     # prior log-density
-    q_logprior     = self.logprior( self.proposed.theta )
-    theta_logprior = self.logprior( self.current.theta )
+    q_logprior     = self.logprior( proposed.theta )
+    theta_logprior = self.logprior( current.theta )
   
     # log-density of proposals
-    q_to_theta_logproposal = self.logproposal( self.current.theta, self.proposed.theta )  
-    theta_to_q_logproposal = self.logproposal( self.proposed.theta, self.current.theta )
+    q_to_theta_logproposal = self.logproposal( current.theta, proposed.theta )  
+    theta_to_q_logproposal = self.logproposal( proposed.theta, current.theta )
       
     # this quantity is constant, the log-likelihood varies
     return q_logprior - theta_logprior + q_to_theta_logproposal - theta_to_q_logproposal
@@ -70,7 +69,7 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
       
   def log_acceptance( self, u = None ):
     # this quantity is constant, the log-likelihood varies
-    self.log_acceptance_offset = self.compute_log_acceptance_offset()
+    self.log_acceptance_offset = self.compute_log_acceptance_offset(self.current, self.proposed)
     
     self.error = np.inf
     nbr_tries = 0
@@ -83,7 +82,8 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
       I = pp.find( self.log_accs > 0 )
       self.log_accs[I] = 0
       self.accs     = np.exp(self.log_accs)
-      self.error = self.metropolis_hastings_error( self.accs, u )
+      self.median = np.median( self.accs )
+      self.error = self.metropolis_hastings_error( self.accs, self.median, u )
       
       #pdb.set_trace()
       if nbr_tries == 0:
@@ -97,6 +97,7 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
         if self.error > self.xi:
           
           print "\t",nbr_tries, self.median, "  ","error > xi: ",self.error, self.describe_states()
+          #pdb.set_trace()
           self.acquire_points()
           nbr_tries += 1
     
@@ -110,7 +111,9 @@ class AdaptiveMetropolisHastingsModel( BaseMetropolisHastingsModel ):
       return -np.inf
     
   def acquire_points( self ):
-    thetas = self.acquisition_model.acquire( self.current, self.proposed, self.deltaS )
+    thetas = self.acquisition_model.acquire( self.current, self.proposed, self.deltaS, self )
+    
+    
     # if np.random.rand() < 0.5:
     #   self.proposed.acquire( self.deltaS )
     # else:

@@ -7,7 +7,7 @@ class RandomAcquisitionModel( AcquisitionModel ):
   def load_params( self, params ):
     pass
     
-  def acquire(self, from_state, to_state, nbr_to_acquire ):
+  def acquire(self, from_state, to_state, nbr_to_acquire, mh_model ):
     thetas = []
     for n in range(nbr_to_acquire):
       if np.random.randn() < 0:

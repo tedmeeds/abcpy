@@ -2,8 +2,8 @@
   "gp" : "basic_regression",
   "kernel" : {
     "type" : "matern32",
-    "params" : [ {"name" : "amp", "value" : 5.0, "prior" : {"name" : "gamma", "params" : [1.0,1.0] }}, 
-                 {"name" : "ls_1", "value" : 1.15, "prior" : {"name" : "gamma", "params" : [1.0,2.0] }}]
+    "params" : [ {"name" : "amp", "value" : 0.05, "prior" : {"name" : "gamma", "params" : [1.0,1.0] }}, 
+                 {"name" : "ls_1", "value" : 0.3, "prior" : {"name" : "gamma", "params" : [1.0,2.0] }}]
   },
   "noise" : {
     "type" : "standard_noise_model",

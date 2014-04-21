@@ -16,7 +16,7 @@ class SurrogateResponseModel( GaussianResponseModel ):
     return m
   
   def is_empty( self ):
-    return False
+    return self.surrogate.is_empty()
       
   def add( self, thetas, pseudo_statistics, observation_statistics ):
     if len( self.pseudo_statistics ) == 0:
@@ -53,3 +53,6 @@ class SurrogateResponseModel( GaussianResponseModel ):
       raise NotImplementedError
       
     return random_logliks
+    
+  def update( self ):
+    self.surrogate.update()

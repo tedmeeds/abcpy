@@ -44,6 +44,35 @@ class ABC_State(object):
   def loglikelihood_rand( self, M=1 ):
     raise NotImplementedError
     
+  def run_at_thetas( self, thetas ):
+    
+    simulation_outputs     = []
+    simulation_statistics  = []
+    S = len(thetas)
+    for theta in thetas:
+      # simulation -> outputs -> statistics
+      simulation_outputs.append( np.squeeze( self.simulation_function( theta ) ) )
+      
+      if self.D is None:
+        #pdb.set_trace()
+        if simulation_outputs[-1].__class__ == np.ndarray:
+          #self.D = len(self.simulation_outputs[-1])
+          self.D = simulation_outputs[-1].size
+        else:
+          self.D = 1
+        
+      # keep track of simulation calls
+      self.add_sim_call()
+    
+      # process for statistics
+      simulation_statistics.append( self.statistics_function( simulation_outputs[-1] ) )
+      
+    # make into arrays
+    simulation_outputs    = np.array(simulation_outputs).reshape( (S,self.D))
+    simulation_statistics = np.array(simulation_statistics).reshape( ( S, self.J ) )
+    
+    return simulation_outputs, simulation_statistics
+      
   def run_simulator_and_compute_statistics(self, reset = True, S = None ):
     if S is None:
       S = self.S

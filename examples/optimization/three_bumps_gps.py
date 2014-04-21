@@ -31,7 +31,7 @@ problem = Problem( problem_params, force_init = True )
 
 epsilon     = 0.25
 
-nbr_samples = 1000
+nbr_samples = 10000
 
 response_model_params = {"likelihood_type":"logcdf"}
 filename = "./examples/optimization/gp.json"

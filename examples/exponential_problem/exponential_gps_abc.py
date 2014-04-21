@@ -2,6 +2,8 @@ from abcpy.problems.exponential     import ExponentialProblem as Problem
 from abcpy.problems.exponential     import default_params     as load_default_params
 from abcpy.algos.mcmc               import abc_mcmc 
 from abcpy.algos.model_mcmc               import abc_mcmc 
+from abcpy.algos.rejection          import abc_rejection       
+from abcpy.states.discrepancy_state  import DiscrepancyState as DiscState
 from abcpy.response_kernels.epsilon_tube import EpsilonTubeResponseKernel as Kernel
 from abcpy.response_kernels.epsilon_gaussian import EpsilonGaussianResponseKernel as Kernel
 from abcpy.states.kernel_based_state  import KernelState as State
@@ -12,6 +14,7 @@ from abcpy.states.response_model_state import ResponseModelState as State
 from abcpy.response_models.surrogate_response_model import SurrogateResponseModel as ResponseModel
 #from abcpy.response_models.gaussian_response_model import GaussianResponseModel as ResponseModel
 from abcpy.acquisition_models.random_acquisition import RandomAcquisitionModel as AcquisitionModel
+from abcpy.acquisition_models.mhe_acquisition import MetropolisHastingsErrorAcquisitionModel as AcquisitionModel
 
 from abcpy.surrogates.gps import GaussianProcessSurrogate as Surrogate
 from progapy.gps.product_gaussian_process import ProductGaussianProcess
@@ -25,10 +28,11 @@ import numpy as np
 problem_params = load_default_params()
 problem = Problem( problem_params, force_init = True )
 
-nbr_samples = 5000
+nbr_samples = 1000
 epsilon = 0.1
 
 filename = "./examples/exponential_problem/gp.json"
+filename = "./examples/exponential_problem/gp_mog.json"
 json_gp = load_json( filename )
 gp = build_gp_from_json( json_gp ) 
 pgp = ProductGaussianProcess( [gp] ) 
@@ -36,7 +40,7 @@ surrogate_params = {}
 surrogate_params["gp"] = pgp
 surrogate = Surrogate( surrogate_params )
 response_model_params = {"surrogate":surrogate}
-acquistion_params = {}
+acquistion_params = {"nbr_steps":10}
 
 state_params = {}
 state_params["S"]                      = 5
@@ -53,19 +57,33 @@ mcmc_params["proposal_rand"]     = problem.theta_proposal_rand
 mcmc_params["logproposal"]       = problem.theta_proposal_logpdf
 mcmc_params["is_marginal"]       = False
 mcmc_params["nbr_samples"]       = nbr_samples
-mcmc_params["xi"]                = 0.4
-mcmc_params["M"]                 = 10
-mcmc_params["deltaS"]            = 1
-mcmc_params["max_nbr_tries"]     = 1
+mcmc_params["xi"]                = 0.1
+mcmc_params["M"]                 = 100
+mcmc_params["deltaS"]            = 2
+mcmc_params["max_nbr_tries"]     = 10
 mcmc_params["acquisition_model"] = AcquisitionModel(acquistion_params)
 
 model = MH_Model( mcmc_params)
 
+print "***************  RUNNING ABC REJECTION ***************"
+lower_epsilon = -epsilon*10
+upper_epsilon = epsilon*10
+
+theta0 = problem.theta_prior_rand()
+state  = DiscState( theta0, state_params )
+abc_recorder = Recorder(record_stats=True)
+thetas, discs = abc_rejection( 2, lower_epsilon, upper_epsilon, state, problem.theta_prior_rand, abc_recorder  )
+
+initX = thetas.copy()
+initY = abc_recorder.get_statistics()[:,0].reshape((len(initX),1))
+
+pgp.add_data( initX, initY )
+#gp.optimize( method = "minimize", params = {"maxnumlinesearch":10} )
+#assert False
 
 #epsilon     = 0.5
-theta0 = problem.theta_prior_rand()
-#theta0 *=0
-#theta0 += 0.1
+theta0 *=0
+theta0 += 0.1
 state  = State( theta0, state_params )
 
 recorder = Recorder(record_stats=True)
