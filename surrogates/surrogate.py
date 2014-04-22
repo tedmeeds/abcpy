@@ -15,9 +15,15 @@ class BaseSurrogate( object ):
       
   def logcdf( self, theta, observations ):
     raise NotImplementedError
+    
+  def logcdfcomplement( self, theta, observations ):
+    raise NotImplementedError
       
   def logpdf_rand( self, theta, observations, N = 1 ):
     raise NotImplementedError
     
   def logcdf_rand( self, theta, observations, N = 1 ):
+    raise NotImplementedError
+    
+  def logcdfcomplement_rand( self, theta, observations, N = 1 ):
     raise NotImplementedError

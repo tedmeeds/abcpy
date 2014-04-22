@@ -52,7 +52,7 @@ class KernelState(ABC_State):
       # over all pseudo statistics
       for s in range(S):
         # ystar = observation statistics for this stats group
-        logkernel[s,group_id] = rg.loglikelihood( sg.ystar, statistics[s,:][:,sg.ids] )
+        logkernel[s,group_id] = rg.loglikelihood( sg.ystar, statistics[s,sg.ids] )
         
       # sum log probs across ngroups statistics  
       loglike_by_s = logkernel.sum(1)

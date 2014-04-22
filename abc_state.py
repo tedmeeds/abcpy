@@ -24,11 +24,11 @@ class ABC_State(object):
     else:
       self.response_groups        = response_groups
   
-    try:
+    if len(self.observation_statistics.shape) > 1:
       self.N, self.J = self.observation_statistics.shape
-    except:
-      self.N = len(self.observation_statistics)
-      self.J = 1
+    else:
+      self.N = 1
+      self.J = len(self.observation_statistics)
       self.observation_statistics = self.observation_statistics.reshape( (self.N,self.J))
     
   def add_sim_call( self, N=1 ):

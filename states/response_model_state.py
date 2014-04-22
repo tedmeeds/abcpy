@@ -32,11 +32,13 @@ class ResponseModelState(KernelState):
     #pdb.set_trace()
     self.loglikelihood_is_computed = False
   
-  def add( self, thetas ):
-    simulation_outputs, simulation_statistics = self.run_at_thetas( thetas )
+  def add( self, thetas, simulation_statistics = None ):
+    if simulation_statistics is None:
+      simulation_outputs, simulation_statistics = self.run_at_thetas( thetas )
+    S,J = simulation_statistics.shape
     ngroups = len(self.observation_groups)
     for group_id, sg, rg in zip( range(ngroups), self.observation_groups, self.response_groups ):
-      rg.add( thetas, simulation_statistics[:,sg.ids], sg.ystar )
+      rg.add( thetas, np.array( [simulation_statistics[:,sg.ids]] ).reshape((S,len(sg.ids))), sg.ystar )
       
     #pdb.set_trace()
     self.loglikelihood_is_computed = False

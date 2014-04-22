@@ -5,7 +5,7 @@ import numpy as np
 import pylab as pp
 import pdb
 
-class EpsilonHeavysideGaussianResponseKernel( SimulationResponseKernel ):
+class EpsilonHeavysideExponentialResponseKernel( SimulationResponseKernel ):
     
   def load_params( self, params ):
     self.down = 1
@@ -62,7 +62,7 @@ class EpsilonHeavysideGaussianResponseKernel( SimulationResponseKernel ):
     for j in range(J):
       h = heavyside( d[j] )
       if h > 0.5:
-        loglikelihood[j] = -0.5*pow( d[j]/self.epsilon[j], 2 )
+        loglikelihood[j] = d[j]/self.epsilon[j]
     
     #pdb.set_trace()
     return np.sum(loglikelihood)

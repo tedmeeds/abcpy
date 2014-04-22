@@ -1,4 +1,4 @@
-from abcpy.helpers import gaussian_logpdf, mvn_diagonal_logpdf, mvn_diagonal_logcdf
+from abcpy.helpers import gaussian_logpdf, mvn_diagonal_logpdf, mvn_diagonal_logcdf, mvn_diagonal_logcdfcomplement
 from abcpy.surrogates.surrogate import BaseSurrogate
 from progapy.gps.product_gaussian_process import ProductGaussianProcess
 from progapy.gps.basic_regression import BasicRegressionGaussianProcess
@@ -17,6 +17,11 @@ class GaussianProcessSurrogate(BaseSurrogate):
       
   def load_params( self, params ):
     self.gp             = params["gp"]
+    
+    if params.has_key("prior_std"):
+      self.prior_std = params["prior_std"]
+    else:
+      self.prior_std = 0.0
   
   def add( self, thetas, pseudo_statistics ):
     if len(thetas.shape) == 1:
@@ -54,7 +59,7 @@ class GaussianProcessSurrogate(BaseSurrogate):
     # use the expected mean and the full uncertainty to compute log-likelihood
     mu, mu_cov, mu_cov_plus_noise = self.posterior_at( theta )
     
-    stddevs = np.diag( mu_cov_plus_noise ) + prior_std
+    stddevs = np.diag( mu_cov_plus_noise ) + self.prior_std
     logpdf_across_J = mvn_diagonal_logpdf( observations, mu, stddevs )
     return np.sum(logpdf_across_J)
       
@@ -62,8 +67,16 @@ class GaussianProcessSurrogate(BaseSurrogate):
     # use the expected mean and the full uncertainty to compute log-likelihood
     mu, mu_cov, mu_cov_plus_noise = self.posterior_at( theta )
     
-    stddevs = np.diag( mu_cov_plus_noise ) + prior_std
+    stddevs = np.diag( mu_cov_plus_noise ) + self.prior_std
     logpdf_across_J = mvn_diagonal_logcdf( observations, mu, stddevs )
+    return np.sum(logpdf_across_J)
+    
+  def logcdfcomplement( self, theta, observations ):
+    # use the expected mean and the full uncertainty to compute log-likelihood
+    mu, mu_cov, mu_cov_plus_noise = self.posterior_at( theta )
+    
+    stddevs = np.diag( mu_cov_plus_noise ) + self.prior_std
+    logpdf_across_J = mvn_diagonal_logcdfcomplement( observations, mu, stddevs )
     return np.sum(logpdf_across_J)
       
   def logpdf_rand( self, theta, observations, N = 1, prior_std = 0.0 ):
@@ -71,7 +84,7 @@ class GaussianProcessSurrogate(BaseSurrogate):
     mu, mu_cov, mu_cov_plus_noise = self.posterior_at( theta )
     
     means   = np.random.multivariate_normal( mu, mu_cov, N )
-    stddevs = np.diag( mu_cov_plus_noise - mu_cov ) + prior_std
+    stddevs = np.diag( mu_cov_plus_noise - mu_cov ) + self.prior_std
     
     logliks = np.zeros( N )
     for n in range(N):
@@ -83,11 +96,23 @@ class GaussianProcessSurrogate(BaseSurrogate):
     mu, mu_cov, mu_cov_plus_noise = self.posterior_at( theta )
     
     means   = np.random.multivariate_normal( mu, mu_cov, N )
-    stddevs = np.diag( mu_cov_plus_noise - mu_cov ) + prior_std
+    stddevs = np.diag( mu_cov_plus_noise - mu_cov ) + self.prior_std
     
     logliks = np.zeros( N )
     for n in range(N):
       logliks[n] = np.sum( mvn_diagonal_logcdf( observations, means[n], stddevs ) )
+    return logliks
+    
+  def logcdfcomplement_rand( self, theta, observations, N = 1 ):
+    # use the expected mean and the full uncertainty to compute log-likelihood
+    mu, mu_cov, mu_cov_plus_noise = self.posterior_at( theta )
+    
+    means   = np.random.multivariate_normal( mu, mu_cov, N )
+    stddevs = np.diag( mu_cov_plus_noise - mu_cov ) + self.prior_std
+    
+    logliks = np.zeros( N )
+    for n in range(N):
+      logliks[n] = np.sum( mvn_diagonal_logcdfcomplement( observations, means[n], stddevs ) )
     return logliks
   #   
   # def loglikelihood( self, theta ):

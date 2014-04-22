@@ -36,6 +36,17 @@ def mvn_diagonal_logcdf( X, mu, stddevs ):
       logpdf += np.log( cdf )
   return logpdf
   
+def mvn_diagonal_logcdfcomplement( X, mu, stddevs ):
+  logpdf = 0.0
+  #pdb.set_trace()
+  for x,mu,std in zip( X.T, mu, stddevs ):
+    cdf = np.squeeze( normcdf( x, mu, std ) )
+    if cdf == 1:
+      logpdf += np.log(1e-12)
+    else:
+      logpdf += np.log( 1.0-cdf )
+  return logpdf
+  
   #return log_pdf_diag_mvn( X, mu, stddevs )
   
 def heavyside( X ):

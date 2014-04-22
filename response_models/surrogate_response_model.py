@@ -39,6 +39,8 @@ class SurrogateResponseModel( GaussianResponseModel ):
       return self.surrogate.logpdf( theta, observations )
     elif self.likelihood_type == "logcdf":
       return self.surrogate.logcdf( theta, observations )
+    elif self.likelihood_type == "logcdfcomplement":
+      return self.surrogate.logcdfcomplement( theta, observations )
     else:
       raise NotImplementedError
     
@@ -48,7 +50,9 @@ class SurrogateResponseModel( GaussianResponseModel ):
     if self.likelihood_type == "logpdf":
       random_logliks = self.surrogate.logpdf_rand( theta, observations, N )
     elif self.likelihood_type == "logcdf":
-      random_logliks = self.surrogate.logpdf_rand( theta, observations, N )
+      random_logliks = self.surrogate.logcdf_rand( theta, observations, N )
+    elif self.likelihood_type == "logcdfcomplement":
+      random_logliks = self.surrogate.logcdfcomplement_rand( theta, observations, N )
     else:
       raise NotImplementedError
       
