@@ -62,7 +62,7 @@ class EpsilonHeavysideExponentialResponseKernel( SimulationResponseKernel ):
     for j in range(J):
       h = heavyside( d[j] )
       if h > 0.5:
-        loglikelihood[j] = d[j]/self.epsilon[j]
+        loglikelihood[j] = -d[j]/self.epsilon[j]
     
     #pdb.set_trace()
     return np.sum(loglikelihood)
