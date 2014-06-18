@@ -2,7 +2,7 @@ import numpy as np
 import pylab as pp
 
   
-def abc_mcmc( nbr_samples, model, verbose = False ):
+def abc_mcmc( nbr_samples, model, verbose = False, verbose_rate = 100 ):
   #assert state is not None, "need to start with a state"
   
   # init with current state's theta
@@ -17,10 +17,11 @@ def abc_mcmc( nbr_samples, model, verbose = False ):
   acceptances     = [True]
   sim_calls       = [model.current.nbr_sim_calls]
   nbr_accepts     = 1
+  model.stay_in_current_state()
   
   for n in xrange(nbr_samples):
-    if verbose and np.mod(n+1,100)==0:
-      print "T = ", n+1, " of ",nbr_samples
+    if verbose and np.mod(n+1,verbose_rate)==0:
+      print "T = ", n+1, " of ",nbr_samples, " loglik: ", loglik
     model.reset_nbr_sim_calls_this_iter()
     this_iters_sim_calls = 0
     
@@ -37,6 +38,9 @@ def abc_mcmc( nbr_samples, model, verbose = False ):
     #model.set_current_state( state )
     log_acc = model.log_acceptance()
     
+    if verbose and verbose_rate == 1:
+       print "  current  loglik: ", model.current.loglikelihood()
+       print "  proposed loglik: ", model.proposed.loglikelihood()
     # keep track of all sim calls
     #this_iters_sim_calls += q_state.nbr_sim_calls
     

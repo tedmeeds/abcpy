@@ -58,7 +58,8 @@ class MetropolisHastingsErrorAcquisitionModel( AcquisitionModel ):
       median = np.median( accs )
       error2 = mh_model.metropolis_hastings_error( accs, median )
       
-      errors.append( max(error1,error2))
+      #errors.append( max(error1,error2))
+      errors.append( error1)
       qs.append(q_theta)
       
     smallest_to_biggest_errors = np.argsort( errors )

@@ -1,6 +1,4 @@
-import numpy as np
-import scipy as sp
-import pylab as pp
+
 
 import scipy
 from scipy import special
@@ -8,8 +6,11 @@ from scipy import stats
 from scipy import integrate
 from scipy.stats import chi2
 from scipy.special import gammaln
+from scipy.stats import norm as normmy
 import pdb
-
+import numpy as np
+import scipy as sp
+import pylab as pp
 sqrt2 = np.sqrt( 2.0 )
 sqrt_2pi = np.sqrt( 2.0 * np.pi )
 log_sqrt_2pi = np.sqrt(sqrt_2pi)
@@ -29,9 +30,10 @@ def mvn_diagonal_logcdf( X, mu, stddevs ):
   logpdf = 0.0
   #pdb.set_trace()
   for x,mu,std in zip( X.T, mu, stddevs ):
-    cdf = np.squeeze( normcdf( x, mu, std ) )
+    cdf = np.squeeze( normmy.cdf( (x-mu)/std ) )
+    #cdf = np.squeeze( normcdf( x, mu, std ) )
     if cdf ==0:
-      logpdf += np.log(1e-12)
+      logpdf += -np.inf
     else:
       logpdf += np.log( cdf )
   return logpdf
@@ -40,9 +42,9 @@ def mvn_diagonal_logcdfcomplement( X, mu, stddevs ):
   logpdf = 0.0
   #pdb.set_trace()
   for x,mu,std in zip( X.T, mu, stddevs ):
-    cdf = np.squeeze( normcdf( x, mu, std ) )
+    cdf = np.squeeze( normmy.cdf( (x-mu)/std ) )
     if cdf == 1:
-      logpdf += np.log(1e-12)
+      logpdf += -np.inf
     else:
       logpdf += np.log( 1.0-cdf )
   return logpdf
@@ -1047,6 +1049,8 @@ def gamma_logprob_gradient_free_x( free_x, alpha, beta):
   return alpha-1 - x*beta
     
 def beta_logprob( x, alpha, beta ):
+  x = max(1e-12,x)
+  x = min(x,1.0-1e-12)
   return (alpha-1)*np.log(x) + (beta-1)*np.log(1-x) + special.gammaln( alpha + beta) - special.gammaln( alpha ) - special.gammaln( beta )
   
 def gp_to_z_dist_old( mu, cov ):

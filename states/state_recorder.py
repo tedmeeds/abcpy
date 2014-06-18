@@ -4,7 +4,7 @@ import pylab as pp
 import pdb
 
 class BaseStateRecorder( object ):
-  def __init__(self, keep_invalid = False, record_stats = False):
+  def __init__(self, keep_invalid = False, record_stats = False, theta_log_file = None, stats_log_file = None ):
     self.thetas          = []
     self.states          = []
     self.accepted        = []
@@ -19,6 +19,9 @@ class BaseStateRecorder( object ):
     
     self.invalid_thetas   = []
     self.keep_invalid     = keep_invalid
+    
+    self.theta_log_file = theta_log_file
+    self.stats_log_file = stats_log_file
   
   def rejection_rate( self ):
     return 1.0 - self.acceptance_rate()
@@ -77,6 +80,27 @@ class BaseStateRecorder( object ):
 #           self.statistics = np.vstack( (self.statistics, np.squeeze(np.array( state.stats )) ))
     if accepted:
       self.nbr_acceptances += 1
+      
+    if self.theta_log_file is not None:
+      fptr = open( self.theta_log_file, "a+" )
+      for t in state.theta:
+        fptr.write( "%f\t"%(t) )
+      fptr.write("\n")
+      fptr.close()
+    
+    #pdb.set_trace()  
+    if self.stats_log_file is not None:
+      fptr = open( self.stats_log_file, "a+" )
+      try:
+        for t in state.simulation_statistics.mean(0):
+          fptr.write( "%f\t"%(t) )
+          
+        #pdb.set_trace()
+      except:
+        for t in state.simulation_statistics[0]:
+          fptr.write( "%f\t"%(t) )
+      fptr.write("\n")
+      fptr.close()
       
   def record_invalid( self, state ):
     if self.keep_invalid:

@@ -1,5 +1,5 @@
 from abcpy.response_model import SimulationResponseModel
-from abcpy.helpers import mvn_logpdf, mvn_diagonal_logpdf, mvn_diagonal_logcdf
+from abcpy.helpers import mvn_logpdf, mvn_diagonal_logpdf, mvn_diagonal_logcdf,mvn_diagonal_logcdfcomplement
 
 import numpy as np
 import pdb
@@ -8,7 +8,7 @@ class GaussianResponseModel( SimulationResponseModel ):
   
   def load_params( self, params ):
     self.likelihood_type = "logpdf"  # by default the likelihood is the density of observations under gaussian density
-    self.diagonalize     = False     # by default, use full covariance
+    self.diagonalize     = True     # by default, use full covariance
     self.epsilon         = 0.0
     
     # check for non-default parameters
@@ -30,7 +30,10 @@ class GaussianResponseModel( SimulationResponseModel ):
       return True
     else:
       return False
-      
+  
+  def update_post_mh( self, observation_group, simulation_statistics, params ):
+    pass
+        
   def add( self, thetas, pseudo_statistics, observation_statistics ):
     if len( self.pseudo_statistics ) == 0:
       self.pseudo_statistics = pseudo_statistics.copy()
@@ -78,9 +81,16 @@ class GaussianResponseModel( SimulationResponseModel ):
         return mvn_logpdf( observations, self.pstats_mean, self.pstats_cov, self.pstats_icov, self.pstats_logdet )
     elif self.likelihood_type == "logcdf":
       if self.diagonalize:
+        #print self.pseudo_statistics, self.pstats_mean
+        #pdb.set_trace()
         return mvn_diagonal_logcdf( observations, self.pstats_mean, self.pstats_stddevs )
       else:
         return mvn_logcdf( observations, self.pstats_mean, self.pstats_cov )
+    elif self.likelihood_type == "logcdfcomp":
+      if self.diagonalize:
+        #print self.pseudo_statistics, self.pstats_mean
+        #pdb.set_trace()
+        return mvn_diagonal_logcdfcomplement( observations, self.pstats_mean, self.pstats_stddevs )
     else:
       raise NotImplementedError
     

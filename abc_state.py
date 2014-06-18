@@ -30,7 +30,10 @@ class ABC_State(object):
       self.N = 1
       self.J = len(self.observation_statistics)
       self.observation_statistics = self.observation_statistics.reshape( (self.N,self.J))
-    
+  
+  def update_post_mh(self):
+    raise NotImplementedError
+      
   def add_sim_call( self, N=1 ):
     self.nbr_sim_calls           += N
     self.nbr_sim_calls_this_iter += N
@@ -89,7 +92,18 @@ class ABC_State(object):
     # sometimes there may be more that one simulation run, this must be set in params
     for s in range(S):
       # simulation -> outputs -> statistics
-      self.simulation_outputs.append( np.squeeze( self.simulation_function( self.theta ) ) )
+      outs = self.simulation_function( self.theta ) 
+      c = 0
+      while outs is None:
+        c+=1
+        print "SIMULATOR RETURNED NONE!!"
+        if c > 9:
+          assert False, "Something wrong at these parameter settings"
+        outs = self.simulation_function( self.theta )
+        
+      self.simulation_outputs.append( np.squeeze( outs ) )
+      
+      
       
       if self.D is None:
         #pdb.set_trace()
@@ -109,7 +123,9 @@ class ABC_State(object):
     self.simulation_outputs    = np.array(self.simulation_outputs).reshape( (S,self.D))
     self.simulation_statistics = np.array(self.simulation_statistics).reshape( ( S, self.J ) )
     
+    #print "self.simulation_statistics: ",self.simulation_statistics
     if reset is False:
       if len(old_sim_outputs) > 0:
         self.simulation_outputs    = np.vstack( (old_sim_outputs,self.simulation_outputs))
         self.simulation_statistics = np.vstack( (old_sim_stats,self.simulation_statistics))
+        

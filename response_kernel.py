@@ -14,4 +14,6 @@ class SimulationResponseKernel( object ):
     
   def loglikelihood( self, observations, pseudo_observations ):
     raise NotImplementedError
-    
+        
+  def add( self, thetas, pseudo_statistics, observation_statistics ):
+    pass

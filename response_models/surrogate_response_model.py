@@ -17,6 +17,9 @@ class SurrogateResponseModel( GaussianResponseModel ):
   
   def is_empty( self ):
     return self.surrogate.is_empty()
+  
+  def update_post_mh( self, observation_group, simulation_statistics, params ):
+    self.surrogate.update_post_mh(observation_group, simulation_statistics, params)
       
   def add( self, thetas, pseudo_statistics, observation_statistics ):
     if len( self.pseudo_statistics ) == 0:

@@ -99,5 +99,5 @@ class ResponseModelState(KernelState):
     
   def update( self ):
     ngroups = len(self.observation_groups)
-    for group_id, sg, rg in zip( range(ngroups), self.observation_groups, self.response_groups ):
-      rg.update()
+    for group_id, og, rg in zip( range(ngroups), self.observation_groups, self.response_groups ):
+      rg.update( og )

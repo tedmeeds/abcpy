@@ -21,11 +21,21 @@ class KernelState(ABC_State):
     if response_groups is None:
       response_groups = self.response_groups
     return KernelState( theta, params, response_groups )
-   
+  
+  def update_post_mh(self):
+    if len(self.simulation_statistics)==0:
+      return
+      
+    ngroups = len(self.observation_groups)
+    for group_id, og, rg in zip( range(ngroups), self.observation_groups, self.response_groups ):
+      rg.update_post_mh( og, self.simulation_statistics[:,og.ids], self.params )
+      og.update_post_mh( rg, self.simulation_statistics[:,og.ids], self.params )
+     
   def loglikelihood(self):
     if self.loglikelihood_is_computed:
       return self.loglikelihood_value
       
+    #pdb.set_trace()
     self.run_simulator_and_compute_statistics()
     self.compute_loglikelihood()
     
@@ -46,37 +56,32 @@ class KernelState(ABC_State):
     self.discrepancy_values = np.zeros( (N,J) )
     
     ngroups = len(self.observation_groups)
+    logkernel = np.zeros( (S,ngroups) ) - np.log(S)
     for group_id, sg, rg in zip( range(ngroups), self.observation_groups, self.response_groups ):
-      logkernel = np.zeros( (S,ngroups) ) - np.log(S)
       
       # over all pseudo statistics
       for s in range(S):
         # ystar = observation statistics for this stats group
+        #pdb.set_trace()  
         logkernel[s,group_id] = rg.loglikelihood( sg.ystar, statistics[s,sg.ids] )
+    
+    #print "logkernel: ", logkernel 
         
-      # sum log probs across ngroups statistics  
-      loglike_by_s = logkernel.sum(1)
-      
-      #   
-      # # over all observation statistics
-      # for n in range(N):
-      #   
-      #   
-      #   # over all pseudo statistics
-      #   for s in range(S):
-      #     logkernel[s,:] = self.kernel.loglikelihood( observations[n,:], statistics[s,:] )
-      #     
-      #   # sum log probs across J statistics  
-      #   loglike_by_s = logkernel.sum(1)
-      #   
-      # loglikelihood for this observation is log sum_s=1^S exp( sum_j log(p(y_star_j | y_s)))
-      loglike_n = logsumexp( loglike_by_s )
-      
-      # logsumexp will return Nan when the max value is -inf
-      if np.isnan(loglike_n):
-        loglike_n = -np.inf
-        
-      self.loglikelihood_value += loglike_n
+    # sum log probs across ngroups statistics  
+    loglike_by_s = logkernel.sum(1) - np.log(S)
+    #pdb.set_trace()
+
+    #   
+    # loglikelihood for this observation is log sum_s=1^S exp( sum_j log(p(y_star_j | y_s)))
+    loglike_n = logsumexp( loglike_by_s )
+    
+    print loglike_n, loglike_by_s, logkernel
+    #pdb.set_trace()
+    # logsumexp will return Nan when the max value is -inf
+    if np.isnan(loglike_n):
+      loglike_n = -np.inf
+    
+    self.loglikelihood_value = loglike_n
       
     self.loglikelihood_is_computed = True
     

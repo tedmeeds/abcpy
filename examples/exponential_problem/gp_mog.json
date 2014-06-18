@@ -1,11 +1,11 @@
 {
   "gp" : "basic_regression",
-  "kernel000" : {
+  "kernel" : {
     "type" : "matern32",
     "params" : [ {"name" : "amp", "value" : 3.0, "prior" : {"name" : "gamma", "params" : [3.0,1.0] }}, 
                  {"name" : "ls_1", "value" : 0.1, "prior" : {"name" : "gamma", "params" : [1.0,2.0] }}]
   },
-  "kernel" : {
+  "kernel00" : {
     "type" : "wmog",
     "params" : [ {"name" : "K", "value" : 5}, 
                  {"name" : "nbags", "value" : 10}, 
@@ -13,7 +13,7 @@
                  {"name" : "factor", "value" : 0.01}]
   },
   "noise" : {
-    "type" : "standard_noise_model",
+    "type" : "constant_noise_model",
     "params" : [{"name" : "var", "value" : 0.19, "prior" : {"name" : "gamma", "params" : [1.0,5.0] }}]
   },
   "mean00" : {
