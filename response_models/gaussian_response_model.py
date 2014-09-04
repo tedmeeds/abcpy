@@ -59,11 +59,12 @@ class GaussianResponseModel( SimulationResponseModel ):
     self.pstats_mean     = pseudo_statistics.mean(0)
     d = pseudo_statistics - self.pstats_mean 
     self.pstats_sumsq    = np.dot( d.T, d )
-    self.pstats_cov      = self.pstats_sumsq / (S-1) + self.epsilon*np.eye(J)
+    self.pstats_cov      = self.pstats_sumsq / (S-1) + pow(self.epsilon,2)*np.eye(J)
     self.pstats_mean_cov = self.pstats_cov / S
     self.pstats_icov     = np.linalg.inv( self.pstats_cov )
     self.pstats_logdet   = -np.log( np.linalg.det( self.pstats_cov ) )  # neg cause of mvn parameterization
     
+    #pdb.set_trace()
     # TODO: other options are to put priors
     
     # zero-out the off-diagonals;  make the statistics independent.

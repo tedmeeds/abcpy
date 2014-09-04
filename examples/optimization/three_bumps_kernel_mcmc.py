@@ -17,22 +17,22 @@ import pylab as pp
 
 # exponential distributed observations with Gamma(alpha,beta) prior over lambda
 problem_params = load_default_params()
-problem_params["noise"] = 0.001
+problem_params["noise"] = 0.0001
 problem_params["prior_mu"] = 0
-problem_params["prior_std"] = 1
+problem_params["prior_std"] = 2
 problem_params["q_stddev"] = 0.75
 problem = Problem( problem_params, force_init = True )
 
-epsilon     = 0.025
+epsilon     = 0.05
 kernel_params = {}
-kernel_params["lower_epsilon"]               = -np.inf
-kernel_params["upper_epsilon"]               = epsilon
-kernel_params["epsilon"]                     = epsilon
+kernel_params["lower_epsilon"]               = np.array([-np.inf])
+kernel_params["upper_epsilon"]               = np.array([epsilon])
+kernel_params["epsilon"]                     = np.array([epsilon])
 kernel_params["direction"]                   = "down"
 
 # since we are running abc_rejection, use a distance epsilon state
 state_params = {}
-state_params["S"]                      = 5
+state_params["S"]                      = 2
 state_params["observation_statistics"] = problem.get_obs_statistics()
 state_params["observation_groups"]     = problem.get_obs_groups()
 state_params["simulation_function"]    = problem.simulation_function
@@ -46,9 +46,9 @@ mcmc_params["priorrand"]       = problem.theta_prior_rand
 mcmc_params["logprior"]        = problem.theta_prior_logpdf
 mcmc_params["proposal_rand"]   = problem.theta_proposal_rand
 mcmc_params["logproposal"]     = problem.theta_proposal_logpdf
-mcmc_params["is_marginal"]     = False
+mcmc_params["is_marginal"]     = True
 
-nbr_samples = 1500
+nbr_samples = 10000
 model = MH_Model( mcmc_params)
 
 
@@ -70,15 +70,15 @@ print "***************  DONE ABC MCMC    ***************"
 print "***************  VIEW RESULTS ***************"
 problem.view_results( recorder, burnin = 0, epsilon = epsilon )
 
-#d=problem.ystar+epsilon-problem.simulation_mean_function(problem.fine_theta_range)
-#I=find(d>=0)
-#pdb.set_trace()
-loglikelihood = np.squeeze(state.response_groups[0].loglikelihood(problem.ystar, problem.simulation_mean_function(problem.fine_theta_range)))
-logposterior = loglikelihood + problem.theta_prior_logpdf(problem.fine_theta_range)
-#logposterior -= logsumexp(logposterior)
-posterior = np.exp(logposterior)
-Z = np.sum(0.5*(posterior[1:]+posterior[:-1])*problem.fine_bin_width)
-#Z=2*posterior.sum()*problem.fine_bin_width
-pp.plot( problem.fine_theta_range, posterior/Z, "b",lw=2)
+# #d=problem.ystar+epsilon-problem.simulation_mean_function(problem.fine_theta_range)
+# #I=find(d>=0)
+# #pdb.set_trace()
+# loglikelihood = np.squeeze(state.response_groups[0].loglikelihood(problem.ystar, problem.simulation_mean_function(problem.fine_theta_range)))
+# logposterior = loglikelihood + problem.theta_prior_logpdf(problem.fine_theta_range)
+# #logposterior -= logsumexp(logposterior)
+# posterior = np.exp(logposterior)
+# Z = np.sum(0.5*(posterior[1:]+posterior[:-1])*problem.fine_bin_width)
+# #Z=2*posterior.sum()*problem.fine_bin_width
+# pp.plot( problem.fine_theta_range, posterior/Z, "b",lw=2)
 pp.show()
 print "***************  DONE VIEW    ***************"

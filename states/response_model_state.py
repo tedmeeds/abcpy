@@ -72,6 +72,7 @@ class ResponseModelState(KernelState):
     ngroups = len(self.observation_groups)
     self.loglikelihood_value = 0.0
     for group_id, sg, rg in zip( range(ngroups), self.observation_groups, self.response_groups ):
+      print sg.ystar, rg.loglikelihood( self.theta, sg.ystar )
       self.loglikelihood_value += rg.loglikelihood( self.theta, sg.ystar )
         
     # over all observation statistics

@@ -31,6 +31,7 @@ def mvn_diagonal_logcdf( X, mu, stddevs ):
   #pdb.set_trace()
   for x,mu,std in zip( X.T, mu, stddevs ):
     cdf = np.squeeze( normmy.cdf( (x-mu)/std ) )
+    #print cdf, (x-mu)/std, x, mu, std
     #cdf = np.squeeze( normcdf( x, mu, std ) )
     if cdf ==0:
       logpdf += -np.inf
@@ -43,6 +44,7 @@ def mvn_diagonal_logcdfcomplement( X, mu, stddevs ):
   #pdb.set_trace()
   for x,mu,std in zip( X.T, mu, stddevs ):
     cdf = np.squeeze( normmy.cdf( (x-mu)/std ) )
+    #print cdf, (x-mu)/std, x, mu, std
     if cdf == 1:
       logpdf += -np.inf
     else:
