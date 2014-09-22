@@ -1051,8 +1051,13 @@ def gamma_logprob_gradient_free_x( free_x, alpha, beta):
   return alpha-1 - x*beta
     
 def beta_logprob( x, alpha, beta ):
-  x = max(1e-12,x)
-  x = min(x,1.0-1e-12)
+  #x = max(1e-12,x)
+  #x = min(x,1.0-1e-12)
+  if x < 0:
+    return -np.inf
+  elif x > 1:
+    return -np.inf
+      
   return (alpha-1)*np.log(x) + (beta-1)*np.log(1-x) + special.gammaln( alpha + beta) - special.gammaln( alpha ) - special.gammaln( beta )
   
 def gp_to_z_dist_old( mu, cov ):
