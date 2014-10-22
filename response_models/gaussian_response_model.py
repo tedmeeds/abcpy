@@ -1,4 +1,4 @@
-from abcpy.response_model import SimulationResponseModel
+from simulation_response_model import SimulationResponseModel
 from abcpy.helpers import mvn_logpdf, mvn_diagonal_logpdf, mvn_diagonal_logcdf,mvn_diagonal_logcdfcomplement
 
 import numpy as np

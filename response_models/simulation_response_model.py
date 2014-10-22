@@ -6,6 +6,7 @@
 # =========================================================================== #
 class SimulationResponseModel( object ):
   def __init__( self, params ):
+    self.is_model = True
     self.params = params
     self.load_params(params)
     self.pseudo_statistics = []
@@ -31,3 +32,6 @@ class SimulationResponseModel( object ):
     
   def loglikelihood_rand( self, theta, observations, N = 1 ):
     raise NotImplementedError
+    
+  def update_post_mh( self, observation_group, simulation_statistics, params ):
+    pass

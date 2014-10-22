@@ -9,14 +9,19 @@ import pylab as pp
 
 import pdb
 
+def lognormal_logpdf( X, mu, sigma ):
+  logpdf = -np.log(X) - 0.5*np.log(2*np.pi) - np.log(sigma) - 0.5*pow( (np.log(X)-mu)/sigma, 2 )
+  return np.sum( logpdf )
+  
 def default_params():
   params = {}
   params["alpha"]           = 0.1
   params["beta"]            = 0.1
   params["theta_star"]      = 0.1
   params["N"]               = 500  # how many observations we draw per simulation
-  params["q_stddev"]        = 0.01
-  
+  params["q_stddev"]        = 0.5
+  params["epsilon"]         = 0.1
+  params["use_model"]       = False
   return params
 
 class ExponentialProblem( BaseProblem ):
@@ -29,17 +34,19 @@ class ExponentialProblem( BaseProblem ):
     # proposal params (LogNormal)
     if params.has_key("q_stddev"):
       self.proposal_std    = params["q_stddev"]
-    #self.proposal_rand   = lognormal_rand
-    #self.proposal_logpdf = lognormal_logpdf
-    self.proposal_rand   = positive_normal_rand
-    self.proposal_logpdf = normal_logpdf
+    self.proposal_rand   = lognormal_rand
+    self.proposal_logpdf = lognormal_logpdf
+    #self.proposal_rand   = positive_normal_rand
+    #self.proposal_logpdf = normal_logpdf
     
     # "true" parameter setting
     self.theta_star = params["theta_star"]
     
     # number of samples per simulation
-    self.N = params["N"]
+    self.N         = params["N"]
     
+    self.epsilon   = params["epsilon"]
+    self.use_model = params["use_model"]
     
   # "create" problem or load observations  
   def initialize( self ):
@@ -87,7 +94,13 @@ class ExponentialProblem( BaseProblem ):
     
   def get_obs_groups( self ):
     assert self.initialized, "Not initialized..."
-    g = ObservationGroup( np.array([0]), self.get_obs_statistics(), {})
+    if self.use_model:
+      params = {"response_type":"gaussian_model",
+                "epsilon":self.epsilon }
+    else:
+      params = {"response_type":"gaussian_kernel",
+                "epsilon":self.epsilon }
+    g = ObservationGroup( np.array([0]), self.get_obs_statistics(), params)
     return [g]   
     
   # run simulation at parameter setting theta, return outputs
@@ -111,10 +124,14 @@ class ExponentialProblem( BaseProblem ):
     return gamma_logprob( theta, self.alpha, self.beta ) # 1/beta cause of how python implements
       
   def theta_proposal_rand( self, theta ):
-    return self.proposal_rand( theta, self.proposal_std )
+    #pdb.set_trace()
+    log_q_theta = np.log(theta) + np.random.randn( len(theta) )*self.proposal_std
+    return np.exp(log_q_theta)
+    #return self.proposal_rand( theta, self.proposal_std )
     
   def theta_proposal_logpdf( self, to_theta, from_theta ):
-    return self.proposal_logpdf( to_theta, from_theta, self.proposal_std )
+    return lognormal_logpdf( to_theta, np.log( from_theta), self.proposal_std )
+    #return self.proposal_logpdf( to_theta, from_theta, self.proposal_std )
     #return self.proposal_logpdf( to_theta, np.log(from_theta), self.proposal_std )
   
   def compute_errors_at_times( self, times, thetas, sims ):

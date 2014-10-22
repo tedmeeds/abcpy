@@ -1,4 +1,4 @@
-from abcpy.response_kernel import SimulationResponseKernel
+from simulation_response_kernel import SimulationResponseKernel
 import numpy as np
 import pylab as pp
 import pdb

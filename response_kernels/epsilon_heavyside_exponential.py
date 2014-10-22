@@ -1,4 +1,4 @@
-from abcpy.response_kernel import SimulationResponseKernel
+from simulation_response_kernel import SimulationResponseKernel
 from abcpy.helpers import gaussian_logpdf, heavyside
 
 import numpy as np
