@@ -3,8 +3,8 @@ import numpy as np
 import pdb
 
 class ResponseModelState(KernelState):
-  def __init__( self, theta, params, response_groups = None ):
-    super(ResponseModelState, self).__init__(theta, params, response_groups )
+  def __init__( self, params, response_groups = None ):
+    super(ResponseModelState, self).__init__( params, response_groups )
     # if response_model is None:
     #   self.response_model = self.params["response_model"]
     # else:
@@ -19,7 +19,10 @@ class ResponseModelState(KernelState):
     # response_model will decide if new means copy or just set to same response model (ie for surrogates)
     #response_model = self.response_model.new( self.response_model.params )
     response_groups = [rg.new(rg.params) for rg in self.response_groups]
-    return ResponseModelState( theta, params, response_groups )
+
+    s = ResponseModelState( params, response_groups )
+    s.set_theta(theta)
+    return s
    
   def acquire( self, N = 1 ):
     # run for N more times, do not reset stats already computed

@@ -2,8 +2,9 @@ import numpy as np
 import pdb
 
 class ABC_State(object):
-  def __init__( self, theta, params, response_groups = None ):
-    self.theta         = theta
+  def __init__( self, params, response_groups = None ):
+    # TODO: changed and removed theta from init
+    self.theta         = None
     self.params        = params
     self.nbr_sim_calls = 0
     self.nbr_sim_calls_this_iter = 0
@@ -30,7 +31,10 @@ class ABC_State(object):
       self.N = 1
       self.J = len(self.observation_statistics)
       self.observation_statistics = self.observation_statistics.reshape( (self.N,self.J))
-  
+    
+  def set_theta( self, theta ):
+    self.theta = theta
+    
   def update_post_mh(self):
     raise NotImplementedError
       

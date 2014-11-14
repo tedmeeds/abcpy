@@ -4,8 +4,8 @@ import numpy as np
 import pdb
 
 class KernelState(ABC_State):
-  def __init__( self, theta, params = None, response_groups = None ):
-    super(KernelState, self).__init__(theta,params,response_groups)
+  def __init__( self, params = None, response_groups = None ):
+    super(KernelState, self).__init__(params,response_groups)
     
     self.loglikelihood_is_computed   = False
     self.discrepancy_values            = None
@@ -20,7 +20,9 @@ class KernelState(ABC_State):
       params = self.params
     if response_groups is None:
       response_groups = self.response_groups
-    return KernelState( theta, params, response_groups )
+    s = KernelState( params, response_groups )
+    s.set_theta(theta)
+    return s
   
   def update_post_mh(self):
     if len(self.simulation_statistics)==0:
@@ -75,7 +77,7 @@ class KernelState(ABC_State):
     # loglikelihood for this observation is log sum_s=1^S exp( sum_j log(p(y_star_j | y_s)))
     loglike_n = logsumexp( loglike_by_s )
     
-    print loglike_n, loglike_by_s, logkernel
+    #print loglike_n, loglike_by_s, logkernel
     #pdb.set_trace()
     # logsumexp will return Nan when the max value is -inf
     if np.isnan(loglike_n):

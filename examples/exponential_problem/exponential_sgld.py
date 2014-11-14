@@ -10,7 +10,7 @@ problem = ExponentialProblem( problem_params, force_init = True )
 
 nbr_samples = 10000
 state_params = state_params_factory.scrape_params_from_problem( problem, S = 5 )
-mcmc_params  = mcmc_params_factory.scrape_params_from_problem( problem, type="mh", is_marginal = False, nbr_samples = nbr_samples )
+mcmc_params  = mcmc_params_factory.scrape_params_from_problem( problem, type="sgldmh", is_marginal = False, nbr_samples = nbr_samples )
 algo_params = { "modeling_approach"  : "kernel",
                 "observation_groups" : problem.get_obs_groups(),
                 "state_params"       : state_params,

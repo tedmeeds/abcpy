@@ -40,14 +40,16 @@ def abc_rejection( nbr_samples, lower_epsilon, upper_epsilon, state, prior_rand,
       if recorder is not None:  
         # only accepted are valid states for rejection sampling
         if accepted:
-          recorder.record_state( theta_state, this_iters_sim_calls, accepted )
+          recorder.add_state( theta_state.theta, theta_state.simulation_statistics )
+          #recorder.record_state( theta_state, this_iters_sim_calls, accepted )
           
         # we may care about the rejected samples, however
-        else:
-          recorder.record_invalid( theta_state )
+        #else:
+        #  recorder.record_invalid( theta_state )
           
   thetas = np.array(thetas) 
   discs = np.array(discs)
+  recorder.finalize()
   #acceptances = np.array(acceptances)   
   return thetas, discs
   

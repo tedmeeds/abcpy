@@ -94,13 +94,11 @@ class ExponentialProblem( BaseProblem ):
     
   def get_obs_groups( self ):
     assert self.initialized, "Not initialized..."
-    if self.use_model:
-      params = {"response_type":"gaussian_model",
-                "epsilon":self.epsilon }
-    else:
-      params = {"response_type":"gaussian_kernel",
-                "epsilon":self.epsilon }
-    g = ObservationGroup( np.array([0]), self.get_obs_statistics(), params)
+
+    params = {"response_type":"gaussian",
+              "response_params":{"epsilon":self.epsilon }
+             }
+    g = ObservationGroup( np.array([0]), self.get_obs_statistics(), params )
     return [g]   
     
   # run simulation at parameter setting theta, return outputs
@@ -161,9 +159,9 @@ class ExponentialProblem( BaseProblem ):
     linecolor   = "r"
     
     # extract from states
-    thetas = states_object.get_thetas(burnin=burnin)
-    stats  = states_object.get_statistics(burnin=burnin)
-    nsims  = states_object.get_sim_calls(burnin=burnin)
+    thetas = states_object.get_thetas()[burnin:,:]
+    stats  = states_object.get_statistics()[burnin:,:]
+    nsims  = states_object.get_sim_calls()[burnin:]
     
     # plot sample distribution of thetas, add vertical line for true theta, theta_star
     f = pp.figure()
@@ -184,7 +182,7 @@ class ExponentialProblem( BaseProblem ):
     pp.axis([self.range[0],self.range[1],ax[2],ax[3]])
     set_label_fonsize( sp, label_size )
     
-    total_sims = states_object.nbr_sim_calls
+    total_sims = states_object.get_sim_calls().sum()
     all_sims = nsims.sum()
     at_burnin = total_sims-all_sims
     errs = []
@@ -218,10 +216,10 @@ class ExponentialProblem( BaseProblem ):
     pp.xlabel( "time")
     pp.ylabel( "err")
     pp.grid('on')
-    
+    pp.show()
     #pdb.set_trace()
     print "ERROR    ",bin_errors_1d( self.coarse_theta_range, self.posterior_cdf_bins, thetas )
-    print "ACC RATE ", states_object.acceptance_rate()
+    #print "ACC RATE ", states_object.acceptance_rate()
     print "SIM      ", total_sims
     # return handle to figure for further manipulation
     return f

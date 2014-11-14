@@ -60,8 +60,8 @@ class BaseMetropolisHastingsModel( object ):
    
   def stay_in_current_state( self ):
     #print "staying in current", self.get_nbr_sim_calls_this_iter()
-    if self.recorder is not None:
-      self.recorder.record_state( self.current, self.get_nbr_sim_calls_this_iter(), accepted = False )
+    #if self.recorder is not None:
+    #  self.recorder.record_state( self.current, self.get_nbr_sim_calls_this_iter(), accepted = False )
       
     self.current.update_post_mh()   
       
@@ -72,8 +72,8 @@ class BaseMetropolisHastingsModel( object ):
     self.set_current_state( self.proposed )
      
     #pdb.set_trace()
-    if self.recorder is not None:
-      self.recorder.record_state( self.current, n, accepted = True ) 
+    #if self.recorder is not None:
+    #  self.recorder.record_state( self.current, n, accepted = True ) 
   
   def log_posterior(self):
     return self.current.loglikelihood() + self.logprior(self.current.theta)

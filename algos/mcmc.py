@@ -3,6 +3,8 @@ import pylab as pp
 
   
 def abc_mcmc( mcmc_params, state, recorder = None, verbose = False ):
+  print "WARNING: use model_mcmc !!"
+  
   nbr_samples   = mcmc_params["nbr_samples"]
   logprior      = mcmc_params["logprior"]
   logproposal   = mcmc_params["logproposal"]

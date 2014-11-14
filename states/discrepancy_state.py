@@ -2,8 +2,8 @@ from abcpy.abc_state import ABC_State
 import numpy as np
 
 class DiscrepancyState(ABC_State):
-  def __init__( self, theta, params = None ):
-    super(DiscrepancyState, self).__init__(theta,params)
+  def __init__( self, params = None ):
+    super(DiscrepancyState, self).__init__(params)
     
     self.discrepancies_are_computed   = False
     self.discrepancy_values = None
@@ -13,7 +13,9 @@ class DiscrepancyState(ABC_State):
       theta = self.theta
     if params is None:
       params = self.params
-    return DiscrepancyState( theta, params )
+    s = DiscrepancyState( params )
+    s.set_theta(theta)
+    return s
    
   def discrepancy(self):
     if self.discrepancies_are_computed:

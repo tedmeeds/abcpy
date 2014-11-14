@@ -36,6 +36,8 @@ class EpsilonHeavysideGaussianResponseModel( GaussianResponseModel ):
       self.direction = self.down
       
     self.epsilon_update_rule = None
+    #print params
+    #pdb.set_trace()
     if params.has_key("epsilon_update_rule"):
       self.epsilon_update_rule = params["epsilon_update_rule"]
       self.epsilon_update_params = params["epsilon_update_params"]
@@ -44,7 +46,7 @@ class EpsilonHeavysideGaussianResponseModel( GaussianResponseModel ):
       if self.epsilon_update_params.has_key("ema"):
         self.ema     = self.epsilon_update_params["ema"]
         self.ema_var = self.epsilon_update_params["ema_var"]
-        pdb.set_trace()
+        #pdb.set_trace()
       else:
         self.ema     = self.epsilon
         self.ema_var = self.epsilon
