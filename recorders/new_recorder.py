@@ -5,9 +5,15 @@ import pdb
 
 def add_to( s, x ):
   if len(s) == 0:
-    s = np.array([x]).reshape( (1,len(x)))
+    if len(x.shape) == 1:
+      s = np.array([x]).reshape( (1,len(x)))
+    else:
+      s = x.copy()
   else:
-    s = np.vstack( (s, x.reshape( (1,len(x))) ))
+    if len(x.shape) == 1:
+      s = np.vstack( (s, x.reshape( (1,len(x))) ))
+    else:
+      s = np.vstack( (s, x))
   return s
     
 class Recorder( object ):
