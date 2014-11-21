@@ -23,8 +23,10 @@ class EpsilonGaussianResponseKernel( SimulationResponseKernel ):
     if len(psh) > 1:
       S,J = psh
     else:
-      S = psh[0]
-      J = 1
+      if J == 1:
+        S = psh[0]
+      else:
+        S = 1
     
     if N > 1:
       assert S == 1,"only allow one greater than the other"
