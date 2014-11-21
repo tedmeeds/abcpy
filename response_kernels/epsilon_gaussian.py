@@ -42,4 +42,4 @@ class EpsilonGaussianResponseKernel( SimulationResponseKernel ):
     for n in range(N):
       loglikelihood[n,:] = gaussian_logpdf( d[n], 0, self.epsilon ) 
     
-    return loglikelihood
+    return loglikelihood.sum(1)
