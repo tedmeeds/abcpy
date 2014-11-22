@@ -148,7 +148,19 @@ class ExponentialProblem( BaseProblem ):
     nbr_sims = np.array(nbr_sims)
     
     return errs, nbr_sims, time_ids 
-    
+  
+  def run_simulation_at_fixed_seeds( self, seed ):
+    ys = []
+    thetas = []
+      
+    for theta in self.coarse_theta_range:
+      np.random.seed( seed )
+      y = self.statistics_function(self.simulation_function(theta))
+      ys.append(y)
+      thetas.append(theta)
+      
+    return np.squeeze(np.array(thetas)), np.squeeze(np.array(ys))
+      
   # take samples/staistics etc and "view" this particular problem
   def view_results( self, states_object, burnin = 1 ):
     # plotting params
