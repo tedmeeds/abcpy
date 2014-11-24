@@ -160,7 +160,56 @@ class ExponentialProblem( BaseProblem ):
       thetas.append(theta)
       
     return np.squeeze(np.array(thetas)), np.squeeze(np.array(ys))
+  
+  def mini_experiment( self, nbr_draws = 100 ):
+    thetas = []
+    ys     = []
+    
+    for seed in range(nbr_draws):
+      x, y = self.run_simulation_at_fixed_seeds( seed )
+      dif = self.obs_statistics - y
+      iy = np.argmin( pow(dif,2) )
+      ys.append( y[iy])
+      thetas.append( x[iy])
       
+    thetas = np.squeeze(np.array(thetas))
+    ys = np.squeeze(np.array(ys))
+    
+    return thetas, ys 
+  
+  def view_simple( self, stats, thetas ):
+    # plotting params
+    nbins       = 20
+    alpha       = 0.5
+    label_size  = 8
+    linewidth   = 3
+    linecolor   = "r"
+    
+    # extract from states
+    #thetas = states_object.get_thetas()[burnin:,:]
+    #stats  = states_object.get_statistics()[burnin:,:]
+    #nsims  = states_object.get_sim_calls()[burnin:]
+    
+    # plot sample distribution of thetas, add vertical line for true theta, theta_star
+    f = pp.figure()
+    sp = f.add_subplot(111)
+    pp.plot( self.fine_theta_range, self.posterior, linecolor+"-", lw = 1)
+    ax = pp.axis()
+    pp.hist( thetas, self.nbins_coarse, range=self.range,normed = True, alpha = alpha )
+    
+    pp.fill_between( self.fine_theta_range, self.posterior, color="m", alpha=0.5)
+    
+    pp.plot( self.posterior_bars_range, self.posterior_bars, 'ro')
+    pp.vlines( thetas.mean(), ax[2], ax[3], color="b", linewidths=linewidth)
+    #pp.vlines( self.theta_star, ax[2], ax[3], color=linecolor, linewidths=linewidth )
+    pp.vlines( self.posterior_mode, ax[2], ax[3], color=linecolor, linewidths=linewidth )
+    
+    pp.xlabel( "theta" )
+    pp.ylabel( "P(theta)" )
+    pp.axis([self.range[0],self.range[1],ax[2],ax[3]])
+    set_label_fonsize( sp, label_size )
+    pp.show()
+          
   # take samples/staistics etc and "view" this particular problem
   def view_results( self, states_object, burnin = 1 ):
     # plotting params
