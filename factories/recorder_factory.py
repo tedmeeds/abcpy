@@ -26,8 +26,8 @@ def create_recorder( params ):
   # where to record the stats (per theta )  -- state of mcmcm / rejection
   if params.has_key("state_stats_log_filename"):
     state_stats_log_file = params["state_stats_log_filename"]
-  if params.has_key("state_logpost_log_file"):
-    state_logpost_log_file = params["state_logpost_log_file"]
+  if params.has_key("state_logpost_log_filename"):
+    state_logpost_log_file = params["state_logpost_log_filename"]
   # where to record the simulation results (ie all simulations)
   if params.has_key("sim_theta_log_filename"):
     sim_theta_log_file   = params["sim_theta_log_filename"]
