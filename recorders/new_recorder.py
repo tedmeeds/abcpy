@@ -93,12 +93,12 @@ class Recorder( object ):
       self.write( theta, self.state_theta_log_file )
       self.write( stats, self.state_stats_log_file )
       if logposterior is not None:
-        self.write( logposterior, self.state_logpost_log_file )
+        self.write( np.array([logposterior]), self.state_logpost_log_file )
     else:
       self.state_thetas = add_to( self.state_thetas, theta )
       self.state_stats  = add_to( self.state_stats, stats )
       if logposterior is not None:
-        self.state_logposteriors = add_to( self.state_logposteriors, logposterior )
+        self.state_logposteriors = add_to( self.state_logposteriors, np.array([logposterior]) )
   
   # add SIMULATION result
   def add_sim( self, theta, stats ):
