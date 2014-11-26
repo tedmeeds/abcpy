@@ -13,6 +13,7 @@ def create_recorder( params ):
   force_directory_init = True
   state_theta_log_file = None
   state_stats_log_file = None
+  state_logpost_log_file = None
   sim_theta_log_file   = None
   sim_stats_log_file   = None
   
@@ -25,6 +26,8 @@ def create_recorder( params ):
   # where to record the stats (per theta )  -- state of mcmcm / rejection
   if params.has_key("state_stats_log_filename"):
     state_stats_log_file = params["state_stats_log_filename"]
+  if params.has_key("state_logpost_log_file"):
+    state_logpost_log_file = params["state_logpost_log_file"]
   # where to record the simulation results (ie all simulations)
   if params.has_key("sim_theta_log_filename"):
     sim_theta_log_file   = params["sim_theta_log_filename"]
@@ -37,13 +40,14 @@ def create_recorder( params ):
   if force_directory_init:
     if_file_init_it( state_theta_log_file )
     if_file_init_it( state_stats_log_file )
+    if_file_init_it( state_logpost_log_file )
     if_file_init_it( sim_theta_log_file )
     if_file_init_it( sim_stats_log_file )
 
   if params.has_key("write_each"):
     write_each = params["write_each"]
     
-  recorder = Recorder( state_theta_log_file, state_stats_log_file, \
+  recorder = Recorder( state_theta_log_file, state_stats_log_file, state_logpost_log_file, \
                        sim_theta_log_file, sim_stats_log_file, \
                        write_each )
   

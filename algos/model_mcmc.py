@@ -63,12 +63,14 @@ def abc_mcmc( nbr_samples, model, verbose = False, verbose_rate = 100 ):
     else:
       model.stay_in_current_state()
 
-    model.recorder.add_state( model.current.theta, model.current.simulation_statistics.mean(0).reshape( (1,model.current.simulation_statistics.shape[1]) ) )
+    
     # keep track of all states in chain
     #if all_states is not None:
     #  all_states.add( state, this_iters_sim_calls, accepted )
     
     loglik = model.log_posterior()
+    model.recorder.add_state( model.current.theta, model.current.simulation_statistics.mean(0).reshape( (1,model.current.simulation_statistics.shape[1]) ), loglik )
+    
     nbr_sim_calls += this_iters_sim_calls
     
     acceptances.append( accepted )

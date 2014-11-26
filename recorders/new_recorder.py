@@ -17,13 +17,14 @@ def add_to( s, x ):
   return s
     
 class Recorder( object ):
-  def __init__(self, state_theta_log_file, state_stats_log_file, \
+  def __init__(self, state_theta_log_file, state_stats_log_file, state_logpost_log_file, \
                     sim_theta_log_file, sim_stats_log_file, \
                     write_each = False ):
     
     # MCMC: the sate is theta and the stats
     self.state_theta_log_file = state_theta_log_file
     self.state_stats_log_file = state_stats_log_file
+    self.state_logpost_log_file = state_logpost_log_file
     
     # SIMS: every theta and stats used in a simulation call
     self.sim_theta_log_file   = sim_theta_log_file
@@ -38,6 +39,7 @@ class Recorder( object ):
     if self.write_each is False:
       self.state_thetas  = []
       self.state_stats   = []
+      self.state_logposteriors   = []
       self.sims_thetas   = []
       self.sims_stats    = []
     
@@ -56,6 +58,13 @@ class Recorder( object ):
       return self.state_stats
     else:
       return self.load( self.state_stats_log_file )
+      
+  # return in memory or in storage MCMC logposterior 
+  def get_logposteriors( self ):
+    if self.write_each is False:
+      return self.state_logposteriors
+    else:
+      return self.load( self.state_logpost_log_file )
   
   def get_statistics(self):
     return self.get_stats()
@@ -78,14 +87,18 @@ class Recorder( object ):
     return self.sim_calls
     
   # add a state of the Markov chain        
-  def add_state( self, theta, stats ):
+  def add_state( self, theta, stats, logposterior = None ):
     self.sim_calls.append( 1 )
     if self.write_each:
       self.write( theta, self.state_theta_log_file )
       self.write( stats, self.state_stats_log_file )
+      if logposterior is not None:
+        self.write( logposterior, self.state_logpost_log_file )
     else:
       self.state_thetas = add_to( self.state_thetas, theta )
       self.state_stats  = add_to( self.state_stats, stats )
+      if logposterior is not None:
+        self.state_logposteriors = add_to( self.state_logposteriors, logposterior )
   
   # add SIMULATION result
   def add_sim( self, theta, stats ):
@@ -102,6 +115,7 @@ class Recorder( object ):
     if self.write_each is False:
       self.write( self.state_thetas, self.state_theta_log_file )
       self.write( self.state_stats, self.state_stats_log_file )
+      self.write( self.state_logposteriors, self.state_logpost_log_file )
       self.write( self.sims_thetas, self.sim_theta_log_file )
       self.write( self.sims_stats, self.sim_stats_log_file )
   
