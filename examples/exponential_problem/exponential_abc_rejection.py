@@ -3,7 +3,10 @@ from abcpy.problems.exponential     import *
 
 # exponential distributed observations with Gamma(alpha,beta) prior over lambda
 problem_params = default_params()
-problem_params["epsilon"] = 0.1
+problem_params["epsilon"] = 0.01
+problem_params["N"]       = 10
+problem_params["alpha"]           = 0.5
+problem_params["beta"]            = 0.1
 problem = ExponentialProblem( problem_params, force_init = True )
 
 

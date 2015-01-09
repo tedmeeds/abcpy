@@ -61,6 +61,7 @@ class ThreeBumpsProblem( BaseProblem ):
     self.obs_statistics = params["ystar"]
     self.ystar          = params["ystar"]
     
+    self.epsilon = params["epsilon"]
     # prior parameters 
     self.prior_mu   = params["prior_mu"]
     self.prior_std  = params["prior_std"]
@@ -123,7 +124,15 @@ class ThreeBumpsProblem( BaseProblem ):
     return self.obs_statistics
   
   def get_obs_groups( self ):
-    g = ObservationGroup( np.array([0]), self.get_obs_statistics(), {})
+    assert self.initialized, "Not initialized..."
+
+    params = {"response_type":"gaussian",
+              "response_params":{"epsilon":self.epsilon }
+              }
+   #   g = ObservationGroup( np.array([0]), self.get_obs_statistics(), params )
+   #    return [g]
+      
+    g = ObservationGroup( np.array([0]), self.get_obs_statistics(), params)
     return [g]     
     
   def simulation_mean_function( self, theta ):
@@ -204,34 +213,52 @@ class ThreeBumpsProblem( BaseProblem ):
     alpha       = 0.5
     label_size  = 8
     linewidth   = 3
-    linecolor   = "r"
+    linecolor   = "b"
     
     # extract from states
-    thetas = states_object.get_thetas(burnin=burnin)
-    stats  = states_object.get_statistics(burnin=burnin)
-    nsims  = states_object.get_sim_calls(burnin=burnin)
+    thetas = states_object.get_thetas()
+    stats  = states_object.get_statistics()
+    nsims  = states_object.get_sim_calls()
     
     # plot sample distribution of thetas, add vertical line for true theta, theta_star
     f = pp.figure()
     sp = f.add_subplot(111)
     #pp.plot( self.fine_theta_range, self.posterior, linecolor+"-", lw = 1)
     ax = pp.axis()
-    pp.hist( thetas, self.nbins_coarse, range=self.range,normed = True, alpha = alpha )
+    pp.hist( thetas, 100, histtype='stepfilled',range=self.range, color="r",normed = True, alpha = 0.5 )
+    pp.hist( thetas, 100, histtype='step',range=self.range, color="k",normed = True, lw=4 )
     posterior = self.posterior(self.fine_theta_range)
     Z = np.sum(0.5*(posterior[1:]+posterior[:-1])*self.fine_bin_width)
-    pp.plot( self.fine_theta_range, self.posterior(self.fine_theta_range)/Z, lw=3, color="r")
+    pp.plot( self.fine_theta_range, self.posterior(self.fine_theta_range)/Z, lw=3, color="b")
     if epsilon is not None:
       posterior = self.posterior(self.fine_theta_range,epsilon)
       Z = np.sum(0.5*(posterior[1:]+posterior[:-1])*self.fine_bin_width)
-      pp.plot( self.fine_theta_range, self.posterior(self.fine_theta_range,epsilon)/Z, lw=3, color="m")
+      #pp.plot( self.fine_theta_range, self.posterior(self.fine_theta_range,epsilon)/Z, lw=3, color="m")
     #host = host_subplot(111, axes_class=AA.Axes)
     #pp.subplots_adjust(right=0.75)
     if epsilon is not None:
       pp.hlines( self.obs_statistics+epsilon, self.fine_theta_range[0], self.fine_theta_range[-1], linestyles="--", lw=2 )
-    pp.hlines( self.obs_statistics, self.fine_theta_range[0], self.fine_theta_range[-1], linestyles="-", lw=2 )
-    pp.plot( self.fine_theta_range, self.simulation_mean_function(self.fine_theta_range) )
-    
+    pp.hlines( self.obs_statistics, self.fine_theta_range[0], self.fine_theta_range[-1], linestyles="-", lw=4 )
+
+    n_samples = 1500
+    xx = -3 + 6*np.random.randn(n_samples)
+    yy = self.simulation_mean_function(xx)+self.noise*np.random.randn(n_samples,1)
+    #pdb.set_trace()
+    #pp.plot( self.fine_theta_range, self.simulation_mean_function(self.fine_theta_range) )
+    I = pp.find( yy < self.ystar[0] + self.epsilon )
+    J = pp.find( yy >= self.ystar[0] + self.epsilon )
+    pp.plot( xx[J], yy[J], 'bo', ms=8, alpha=0.75)
+    pp.plot( xx[I], yy[I], 'ro', ms=20, alpha=0.95)
     pp.ylim( 0, 3 )
+    pp.xlim( -3,3)
+    
+    pp.title("Three Bumps")
+    for tick in sp.yaxis.get_major_ticks():
+      tick.label.set_fontsize(24)
+
+    for tick in sp.xaxis.get_major_ticks():
+      tick.label.set_fontsize(24)
+    sp.title.set_fontsize(20)  
     #sp = f.add_subplot(212)
     #Z=self.posterior(self.fine_theta_range).sum()*self.fine_bin_width
     #pp.plot( self.fine_theta_range, self.posterior(self.fine_theta_range)/Z)
