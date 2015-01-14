@@ -48,10 +48,10 @@ nbr_samples = 200
 #theta0 = rej_thetas[-1]
 #theta0 = np.array([ 3.07687576, -0.86457619,  6.1387475 , -3.85783667, -0.40429067,  9.        ])
     
-nbr_samples = 1000
+nbr_samples = 10000
 #epsilon     = 0.5
-state_params = state_params_factory.scrape_params_from_problem( problem, S = 15 )
-state_params["diagonalize"] = True
+state_params = state_params_factory.scrape_params_from_problem( problem, S = 20 )
+state_params["diagonalize"] = False
 mcmc_params  = mcmc_params_factory.scrape_params_from_problem( problem, type="mh", is_marginal = True, nbr_samples = nbr_samples )
 algo_params = { "modeling_approach"  : "local_model",
                 "observation_groups" : problem.get_obs_groups(),
