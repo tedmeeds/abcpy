@@ -27,7 +27,7 @@ problem = BlowflyProblem( problem_params, force_init = True )
 
 nbr_samples = 10000
 #epsilon     = 0.5
-state_params = state_params_factory.scrape_params_from_problem( problem, S = 1 )
+state_params = state_params_factory.scrape_params_from_problem( problem, S = 10 )
 mcmc_params  = mcmc_params_factory.scrape_params_from_problem( problem, type="mh", is_marginal = True, nbr_samples = nbr_samples )
 algo_params = { "modeling_approach"  : "kernel",
                 "observation_groups" : problem.get_obs_groups(),
