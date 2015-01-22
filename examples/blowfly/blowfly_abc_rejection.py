@@ -7,7 +7,7 @@ problem_params["epsilon"] = 2
 problem = BlowflyProblem( problem_params, force_init = True )
 
 # since we are running abc_rejection, use a distance epsilon state
-state_params = state_params = state_params_factory.scrape_params_from_problem( problem )
+state_params = state_params_factory.scrape_params_from_problem( problem )
 
 algo_params = { "modeling_approach"  : "kernel",
                 "observation_groups" : problem.get_obs_groups(),

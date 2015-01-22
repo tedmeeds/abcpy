@@ -221,7 +221,19 @@ class BlowflyProblem( BaseProblem ):
     log_p += poisson_logpdf(  theta[5], self.mu_tau )
     
     return log_p
-      
+  
+  def theta_prior_logpdf_grad( self, theta ):
+    g = np.zeros( len(theta))
+    
+    g[0] = -( theta[0] - self.mu_log_P )/( self.std_log_P**2 )
+    g[1] = -( theta[1] - self.mu_log_delta )/( self.std_log_delta**2 )
+    g[2] = -( theta[2] - self.mu_log_N0 )/( self.std_log_N0**2 )
+    g[3] = -( theta[3] - self.mu_log_sigma_d )/( self.std_log_sigma_d**2 )
+    g[4] = -( theta[4] - self.mu_log_sigma_p )/( self.std_log_sigma_p**2 )
+    g[5] = -np.log(  theta[5] /  self.mu_tau )
+    
+    return g
+    
   def theta_proposal_rand( self, theta ):
     
     tau = theta[5]
